@@ -1,0 +1,21 @@
+# Segurança (Fase 1)
+
+| Tema                   | Implementação                                                                                                                                                                                                   |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Senhas                 | PBKDF2-SHA256 (Web Crypto), salt de 16 bytes, iterações no próprio hash, máximo de 100.000 (limite do Workers); mínimo de 12 caracteres                                                                         |
+| Sessão                 | Token aleatório de 256 bits; só o SHA-256 fica no banco; cookie `HttpOnly`, `SameSite=Lax`, `Secure` + prefixo `__Host-` em produção; rotação após 24 h; validade de 30 dias; logout apaga a sessão no servidor |
+| CSRF                   | `SameSite=Lax` + checagem de `Origin` (ou `X-Requested-With`) nas rotas que alteram estado                                                                                                                      |
+| Enumeração de usuários | Login devolve a mesma resposta para senha errada e e-mail inexistente (com hash descartável para igualar o tempo)                                                                                               |
+| Força bruta            | 5 falhas em 15 min bloqueiam o e-mail por 15 min (contador em D1, só escreve em falha)                                                                                                                          |
+| Anti-robô              | Turnstile em cadastro, login e upload; em produção sem segredo a rota recusa                                                                                                                                    |
+| Upload                 | URL assinada de 5 min; checksum SHA-256 assinado; magic bytes e tamanho real conferidos; objeto inválido é excluído; tipos em lista fechada                                                                     |
+| Multi-tenant           | Toda rota de workspace passa por `requireWorkspacePermission`; não-membro recebe 404; testes cobrem usuário B contra recursos de A                                                                              |
+| Logs                   | `audit_logs` guarda só metadados; URLs assinadas e conteúdo de documentos nunca são registrados                                                                                                                 |
+| Cabeçalhos             | `secureHeaders` do Hono                                                                                                                                                                                         |
+| Segredos               | Nenhum no repositório ou no front; segredos via `wrangler secret`                                                                                                                                               |
+
+## Pendências conhecidas
+
+- Custo de CPU do PBKDF2 contra o limite de 10 ms do plano Free **não foi medido** (só roda em Cloudflare real). Se estourar, reduzir iterações via `PBKDF2_ITERATIONS`.
+- Rate Limiting binding do Workers (D3) ainda não está ligado; disponibilidade no plano Free não confirmada.
+- Criptografia de `personal_data_profiles` (AES-GCM) e `user_consents` entram na Fase 5; a tabela já existe.

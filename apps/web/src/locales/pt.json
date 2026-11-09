@@ -1,0 +1,63 @@
+{
+  "app": { "name": "DocuPilot AI", "tagline": "Documentos organizados, com origem rastreável." },
+  "nav": {
+    "documents": "Documentos",
+    "logout": "Sair",
+    "login": "Entrar",
+    "register": "Criar conta"
+  },
+  "auth": {
+    "email": "E-mail",
+    "password": "Senha",
+    "passwordHint": "Mínimo de 12 caracteres.",
+    "displayName": "Nome",
+    "loginTitle": "Entrar",
+    "registerTitle": "Criar conta",
+    "submitLogin": "Entrar",
+    "submitRegister": "Criar conta",
+    "noAccount": "Ainda não tem conta?",
+    "haveAccount": "Já tem conta?"
+  },
+  "documents": {
+    "title": "Documentos",
+    "empty": "Nenhum documento ainda.",
+    "status": {
+      "needs_text": "Aguardando extração de texto",
+      "extracted": "Texto extraído",
+      "needs_ocr": "Precisa de OCR",
+      "extraction_failed": "Falha na extração"
+    }
+  },
+  "upload": {
+    "title": "Enviar documento",
+    "choose": "Escolher arquivo",
+    "send": "Enviar",
+    "hashing": "Calculando impressão digital do arquivo…",
+    "uploading": "Enviando…",
+    "validating": "Validando o arquivo…",
+    "done": "Arquivo enviado e validado.",
+    "allowed": "Aceitos: PDF, JPG, PNG, DOCX, TXT, CSV e MD (até 25 MB)."
+  },
+  "status": {
+    "storageOff": "Armazenamento de arquivos não configurado: o envio está indisponível.",
+    "offline": "Você está offline. O envio e a edição exigem conexão.",
+    "demo": "Ambiente de desenvolvimento"
+  },
+  "theme": { "label": "Tema", "system": "Sistema", "light": "Claro", "dark": "Escuro" },
+  "errors": {
+    "UNAUTHENTICATED": "E-mail ou senha inválidos, ou sessão expirada.",
+    "FORBIDDEN": "Você não tem permissão para isso.",
+    "NOT_FOUND": "Não encontrado.",
+    "VALIDATION_ERROR": "Verifique os dados informados.",
+    "QUOTA_EXCEEDED": "Quota do plano gratuito atingida.",
+    "STORAGE_NOT_CONFIGURED": "Armazenamento de arquivos não configurado.",
+    "SERVICE_NOT_CONFIGURED": "Serviço não configurado.",
+    "FILE_TYPE_NOT_ALLOWED": "Tipo de arquivo não permitido.",
+    "FILE_TOO_LARGE": "Arquivo acima do limite de 25 MB.",
+    "FILE_CONTENT_MISMATCH": "O conteúdo do arquivo não corresponde ao tipo informado. O arquivo foi descartado.",
+    "RATE_LIMITED": "Muitas tentativas. Tente novamente mais tarde.",
+    "CONFLICT": "Operação em conflito (por exemplo, e-mail já cadastrado).",
+    "INTERNAL": "Erro interno. Tente novamente.",
+    "NETWORK": "Falha de rede."
+  }
+}

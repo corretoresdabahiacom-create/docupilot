@@ -1,0 +1,24 @@
+name = "docupilot-api"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+ENVIRONMENT = "production"
+# Origens do front-end autorizadas a chamar a API, separadas por vírgula.
+ALLOWED_ORIGINS = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "docupilot"
+# Preencha com o id retornado por `wrangler d1 create docupilot`.
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# Armazenamento (R2) fica DESLIGADO até o usuário ativar o R2 na própria conta.
+# Depois de ativar, descomente e configure os segredos (nunca no repositório):
+#   wrangler secret put R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET_NAME
+# [[r2_buckets]]
+# binding = "STORAGE_BUCKET"
+# bucket_name = "docupilot-files"
+
+# Anti-robô: wrangler secret put TURNSTILE_SECRET

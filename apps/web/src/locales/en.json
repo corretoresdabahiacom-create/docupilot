@@ -1,0 +1,63 @@
+{
+  "app": { "name": "DocuPilot AI", "tagline": "Organized documents, with traceable origin." },
+  "nav": {
+    "documents": "Documents",
+    "logout": "Sign out",
+    "login": "Sign in",
+    "register": "Create account"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 12 characters.",
+    "displayName": "Name",
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?"
+  },
+  "documents": {
+    "title": "Documents",
+    "empty": "No documents yet.",
+    "status": {
+      "needs_text": "Waiting for text extraction",
+      "extracted": "Text extracted",
+      "needs_ocr": "Needs OCR",
+      "extraction_failed": "Extraction failed"
+    }
+  },
+  "upload": {
+    "title": "Upload document",
+    "choose": "Choose file",
+    "send": "Upload",
+    "hashing": "Computing file fingerprint…",
+    "uploading": "Uploading…",
+    "validating": "Validating file…",
+    "done": "File uploaded and validated.",
+    "allowed": "Accepted: PDF, JPG, PNG, DOCX, TXT, CSV and MD (up to 25 MB)."
+  },
+  "status": {
+    "storageOff": "File storage is not configured: uploads are unavailable.",
+    "offline": "You are offline. Uploading and editing require a connection.",
+    "demo": "Development environment"
+  },
+  "theme": { "label": "Theme", "system": "System", "light": "Light", "dark": "Dark" },
+  "errors": {
+    "UNAUTHENTICATED": "Invalid email or password, or session expired.",
+    "FORBIDDEN": "You do not have permission to do that.",
+    "NOT_FOUND": "Not found.",
+    "VALIDATION_ERROR": "Check the data you entered.",
+    "QUOTA_EXCEEDED": "Free plan quota reached.",
+    "STORAGE_NOT_CONFIGURED": "File storage is not configured.",
+    "SERVICE_NOT_CONFIGURED": "Service not configured.",
+    "FILE_TYPE_NOT_ALLOWED": "File type not allowed.",
+    "FILE_TOO_LARGE": "File is over the 25 MB limit.",
+    "FILE_CONTENT_MISMATCH": "The file content does not match the declared type. The file was discarded.",
+    "RATE_LIMITED": "Too many attempts. Try again later.",
+    "CONFLICT": "Conflicting operation (for example, email already registered).",
+    "INTERNAL": "Internal error. Please try again.",
+    "NETWORK": "Network failure."
+  }
+}
