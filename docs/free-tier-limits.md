@@ -74,6 +74,10 @@ Presigned URLs: suportam GET/HEAD/PUT/DELETE; validade máxima de 7 dias; exigem
 5. **50 subrequests / 50 queries por invocação**: gravar muitos campos extraídos exige lotes.
 6. **Cron**: 5 triggers e 10 ms de CPU; retenção e limpeza devem ser feitas em lotes pequenos.
 
+## 8. Orçamento de escritas da análise (Fase 3)
+
+Uma análise grava, em um único lote: remoção do resultado anterior + 1 linha por campo agrupado + até 5 fontes por campo + achados + metadados (~`2 × campos` escritas). Com no máximo 400 ocorrências e 300 análises/mês, o pior caso é da ordem de dezenas de milhares de linhas por mês, dentro dos 100.000/dia, mas índices contam como escritas adicionais. **Estimativa; não medida em D1 real.**
+
 ## Fontes
 
 - https://developers.cloudflare.com/workers/platform/limits/

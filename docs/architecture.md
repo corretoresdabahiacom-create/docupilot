@@ -1,4 +1,4 @@
-# Arquitetura (Fase 2)
+# Arquitetura (Fase 3)
 
 ```
 Navegador (React PWA)
@@ -31,6 +31,13 @@ Navegador (React PWA)
 3. A busca (`GET /workspaces/:id/search`) usa FTS5 sobre a versão atual e devolve documento, página/seção e trecho.
 4. Pastas (`/folders`, até 5 níveis, 200 por workspace), documentos (renomear, mover, excluir), versões (tornar atual, excluir) e URLs de download assinadas (15 min) completam o CRUD.
 5. A pré-visualização usa pdfjs (PDF), `<img>` (imagem) e texto escapado (demais); nunca HTML do documento.
+
+## Análise estruturada (Fase 3)
+
+1. Com o texto extraído, o navegador roda os padrões (`packages/shared/src/extraction`) e envia só as ocorrências (`POST .../documents/:id/analysis`).
+2. O Worker reconfere cada ocorrência contra a página armazenada (D12), agrupa em `extracted_fields` + `extraction_sources`, roda os detectores de inconsistência e grava tudo em um lote atômico.
+3. `GET .../analysis` devolve campos com página e trecho, achados por categoria e duplicados (exato por SHA-256, similar por SimHash); o resultado de versão anterior aparece como `stale`.
+4. Busca no documento, consultas rápidas e resumo extrativo rodam sobre o texto/campos já guardados.
 
 ## Estados reais (R4)
 

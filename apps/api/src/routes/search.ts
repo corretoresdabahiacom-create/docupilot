@@ -28,6 +28,7 @@ interface Params {
   workspaceId: string;
   q: string;
   folderId?: string;
+  documentId?: string;
   limit: number;
   offset: number;
 }
@@ -42,9 +43,14 @@ type Row = {
   text?: string;
 };
 
-function folderClause(folderId?: string) {
-  if (!folderId) return sql``;
-  return folderId === 'root' ? sql`AND d.folder_id IS NULL` : sql`AND d.folder_id = ${folderId}`;
+function folderClause(folderId?: string, documentId?: string) {
+  const parts = [];
+  if (folderId)
+    parts.push(
+      folderId === 'root' ? sql`AND d.folder_id IS NULL` : sql`AND d.folder_id = ${folderId}`,
+    );
+  if (documentId) parts.push(sql`AND d.id = ${documentId}`);
+  return parts.length ? sql.join(parts, sql` `) : sql``;
 }
 
 /** FTS5 (bm25 + snippet). Só páginas da versão atual de cada documento. */
@@ -60,7 +66,7 @@ export async function searchFts(db: Db, p: Params): Promise<SearchHit[]> {
     JOIN documents d ON d.id = p.document_id AND d.current_version_id = p.version_id
     LEFT JOIN document_metadata dm ON dm.document_id = d.id
     WHERE document_pages_fts MATCH ${match} AND p.workspace_id = ${p.workspaceId}
-      ${folderClause(p.folderId)}
+      ${folderClause(p.folderId, p.documentId)}
     ORDER BY bm25(document_pages_fts), d.name, p.page_number
     LIMIT ${p.limit} OFFSET ${p.offset}`);
   return rows.map(toHit);
@@ -100,7 +106,7 @@ export async function searchLike(db: Db, p: Params): Promise<SearchHit[]> {
     JOIN documents d ON d.id = p.document_id AND d.current_version_id = p.version_id
     LEFT JOIN document_metadata dm ON dm.document_id = d.id
     WHERE p.workspace_id = ${p.workspaceId} AND ${sql.join(conds, sql` AND `)}
-      ${folderClause(p.folderId)}
+      ${folderClause(p.folderId, p.documentId)}
     ORDER BY d.name, p.page_number
     LIMIT ${p.limit} OFFSET ${p.offset}`);
   return rows.map((r) => toHit({ ...r, snippet: buildSnippet(r.text ?? '', tokens) }));

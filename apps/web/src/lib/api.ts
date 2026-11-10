@@ -110,3 +110,48 @@ export interface Health {
   turnstile: { configured: boolean };
   flags: Record<string, boolean>;
 }
+
+export type SourceKind = 'deterministic' | 'heuristic' | 'ocr' | 'ocr_external' | 'ai_external';
+export interface AnalysisSource {
+  pageNumber: number;
+  start: number;
+  end: number;
+  snippet: string;
+}
+export interface AnalysisField {
+  id: string;
+  fieldType: string;
+  rawValue: string;
+  normalizedValue: string;
+  label: string | null;
+  patternId: string;
+  confidence: number;
+  sourceKind: SourceKind;
+  sources: AnalysisSource[];
+}
+export interface AnalysisFinding {
+  id?: string;
+  ruleId: string;
+  category: 'erro_confirmado_por_regra' | 'divergencia_identificada' | 'exige_revisao_humana';
+  evidence: Array<{ pageNumber: number; snippet: string }>;
+  detail: Record<string, string>;
+  reportedBy: 'server' | 'client';
+}
+export interface AnalysisResponse {
+  status: 'none' | 'stale' | 'fresh';
+  analysis: {
+    language: string;
+    analyzedAt: number;
+    fields: number;
+    occurrences: number;
+    rejected: number;
+    truncated: { fields: number; candidates: number };
+  } | null;
+  fields: AnalysisField[];
+  inconsistencies: AnalysisFinding[];
+  duplicates: {
+    exact: Array<{ documentId: string; name: string }>;
+    similar: Array<{ documentId: string; name: string; distance: number }>;
+    similarThreshold: number;
+  };
+}

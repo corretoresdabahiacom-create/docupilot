@@ -44,6 +44,7 @@ Configuráveis em `system_settings`, com teto global além do por workspace.
 | Tamanho por arquivo                    | 100 MB   | 25 MB                   |
 | Documentos por workspace               | 500      | 200                     |
 | Extrações por mês                      | 1.000    | 300                     |
+| Análises por mês (Fase 3)              | n/d      | 300                     |
 | Exportações por mês                    | 200      | 100                     |
 | Membros por workspace                  | 20       | 5                       |
 | Escritas D1 por dia (orçamento global) | n/d      | 80.000 (80% de 100.000) |
@@ -86,3 +87,23 @@ tesseract.js no cliente, só em desktop (verificação feita no navegador; o ser
 ## D11. Exclusão
 
 Documento: o banco é limpo primeiro (páginas, índice, hashes, metadados, versões) e os objetos depois. Se a remoção no armazenamento falhar, sobram objetos órfãos (custo), nunca documentos apontando para arquivo inexistente; a resposta traz `storageCleaned`. Faxina de órfãos por cron fica para fase posterior. Pasta só é excluída se estiver vazia.
+
+## D12. Extração estruturada: no navegador, reconferida no servidor (Fase 3)
+
+O navegador roda os padrões (regex e heurísticas de `packages/shared/src/extraction`, catálogo em `docs/heuristics.md`) e envia **apenas o que encontrou**: `pattern_id`, página, posição (início/fim) e o trecho bruto. O Worker nunca varre o documento inteiro (10 ms de CPU). Para **cada** item o servidor:
+
+1. confere inteiros e intervalo; exige `raw_value == texto.slice(início, fim)` (máx. 400 caracteres);
+2. reexecuta o padrão nomeado numa janela de ±80 caracteres e exige o mesmo trecho e a mesma posição;
+3. **regenera** valor normalizado, confiança, tipo de fonte e rótulo; o que o cliente mandou nesses campos é ignorado.
+
+Item que não confere é descartado e contado (`rejected`); se todos forem recusados a resposta é 400. Assim "nunca inventar dados" depende de código verificável e não de confiança no cliente.
+
+- **Agrupamento**: ocorrências com o mesmo (tipo, padrão, valor normalizado) viram **uma** linha em `extracted_fields` com até 5 fontes em `extraction_sources` (página, posição e trecho gerado no servidor).
+- **Escrita**: INSERTs com `json_each` em lotes de 40, dentro de `runBatch` (atômico), apagando antes o resultado anterior. Poucas instruções por requisição (limite de 50 queries do D1). **Verificado em libSQL; não verificado em D1 real.**
+- **Estado**: metadados da análise em `document_tasks` (`kind='analysis'`), achados em `kind='inconsistency'`. O GET compara a versão analisada com a atual: `fresh`, `stale` (campos e achados ocultos) ou `none`.
+- **Duplicados** calculados na leitura: exato = mesmo SHA-256 da versão atual; similar = SimHash com distância de Hamming ≤ 6, só entre documentos `extracted`. O SimHash vem do navegador e o servidor só valida o formato; é **consultivo**.
+- **Idioma**: contagem própria de palavras funcionais (pt/en/es/und), não `franc` (desvio declarado: só precisamos distinguir três idiomas).
+- **Cota**: `analysesPerMonth = 300` (`usage_records`, métrica `analyses`).
+- **Busca no documento**: a mesma busca por palavra-chave, com filtro `documentId`. Não é pergunta em linguagem natural (exigiria IA externa, desligada por padrão).
+- **Resumo**: extrativo (TextRank) calculado no navegador sobre o texto já armazenado; modos por cláusulas e por obrigações aparecem como indisponíveis.
+- **Desvios do briefing** (todos em `docs/heuristics.md` §15): conflitos só para rótulos de valor único (lista fechada); `cpf_cnpj_dv_invalid` exige a palavra CPF/CNPJ até 20 caracteres antes; regra de anexo compara com nomes de arquivo; campo obrigatório vazio em AcroForm é **informado pelo cliente** (`reportedBy: 'client'`), pois o servidor não relê o PDF.

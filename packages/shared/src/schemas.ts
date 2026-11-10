@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CANDIDATE_RULES, MAX_CANDIDATES, MAX_FIELD_OCCURRENCES } from './extraction';
 import { ALLOWED_MIME_TYPES } from './files';
 import { MAX_CHARS_PER_PAGE, MAX_PAGES_PER_DOCUMENT, MAX_PAGES_PER_REQUEST } from './quotas';
 
@@ -96,9 +97,64 @@ export const extractionCompleteSchema = z.object({
 export const searchQuerySchema = z.object({
   q: z.string().trim().min(2).max(200),
   folderId: z.string().min(1).optional(),
+  /** Restringe a busca a um documento ("Busca no documento"). */
+  documentId: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).max(1000).default(0),
 });
+
+const pageNo = z.number().int().min(1).max(MAX_PAGES_PER_DOCUMENT);
+
+/** Resultado da análise feita no navegador; o servidor reconfere cada item contra o texto. */
+export const analysisSchema = z.object({
+  language: z.enum(['pt', 'en', 'es', 'und']),
+  simhash: z
+    .string()
+    .regex(/^[0-9a-f]{16}$/)
+    .nullable()
+    .optional(),
+  fields: z
+    .array(
+      z.object({
+        pattern_id: z.string().min(1).max(40),
+        page_number: pageNo,
+        span_start: z.number().int().min(0),
+        span_end: z.number().int().min(1),
+        raw_value: z.string().min(1).max(400),
+      }),
+    )
+    .max(MAX_FIELD_OCCURRENCES),
+  candidates: z
+    .array(
+      z.object({
+        rule: z.enum(CANDIDATE_RULES),
+        page_number: pageNo,
+        start: z.number().int().min(0),
+        end: z.number().int().min(1),
+        raw: z.string().min(1).max(200),
+        key: z.string().max(8).optional(),
+      }),
+    )
+    .max(MAX_CANDIDATES),
+  acroform: z
+    .array(
+      z.object({
+        pageNumber: pageNo,
+        name: z.string().min(1).max(200),
+        required: z.boolean(),
+        filled: z.boolean(),
+      }),
+    )
+    .max(200)
+    .default([]),
+  truncated: z
+    .object({
+      fields: z.number().int().min(0).max(1_000_000),
+      candidates: z.number().int().min(0).max(1_000_000),
+    })
+    .optional(),
+});
+export type AnalysisInput = z.infer<typeof analysisSchema>;
 
 export const CONSENT_PURPOSES = ['browser_ocr'] as const;
 export const consentSchema = z.object({ purpose: z.enum(CONSENT_PURPOSES) });

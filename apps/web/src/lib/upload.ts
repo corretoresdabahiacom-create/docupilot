@@ -1,4 +1,5 @@
 import { api, ApiError } from './api';
+import { runAnalysis } from './analysis';
 import { extractFromBlob } from './extract';
 import { submitExtraction } from './extract/submit';
 import { sha256Hex } from './hash';
@@ -123,10 +124,20 @@ export async function runExtraction(
   onProgress?: (done: number, total: number) => void,
 ): Promise<string> {
   const result = await extractFromBlob(blob, doc.mime);
-  return submitExtraction(
+  const status = await submitExtraction(
     { workspaceId, documentId: doc.documentId, versionId: doc.versionId },
     result,
     'client',
     onProgress,
   );
+  // A análise estruturada é um passo à parte: se falhar (rede, quota), o texto já está salvo e o
+  // usuário pode analisar de novo na página do documento.
+  if (status === 'extracted') {
+    try {
+      await runAnalysis(workspaceId, doc, blob);
+    } catch {
+      /* segue sem análise */
+    }
+  }
+  return status;
 }

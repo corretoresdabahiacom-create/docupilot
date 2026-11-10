@@ -98,13 +98,14 @@
     "breadcrumb": "Folder path"
   },
   "search": {
-    "label": "Search document text",
+    "label": "Keyword search across documents",
     "button": "Search",
     "clear": "Clear",
     "results": "Results for “{{q}}”",
     "none": "No matching passage found. Search only covers documents with extracted text.",
     "hasMore": "There are more results; refine your search.",
-    "likeMode": "Simplified search is active (no text index): accents are not ignored and it may be slower."
+    "likeMode": "Simplified search is active (no text index): accents are not ignored and it may be slower.",
+    "disclaimer": "Keyword search; natural-language questions need external AI (off by default)."
   },
   "document": {
     "back": "Back",
@@ -172,5 +173,107 @@
     "done": "Text recognized and saved as a transcription.",
     "empty": "No text was recognized.",
     "noNewText": "No new text was recognized on these pages; the text already saved was kept."
+  },
+  "analysis": {
+    "title": "Structured analysis",
+    "intro": "Fields found by patterns (regex and heuristics) in your browser; the server re-checks each one against the text before saving it. This is not AI and not legal, accounting or tax advice.",
+    "run": "Analyze document",
+    "rerun": "Analyze again",
+    "running": "Analyzing…",
+    "status": {
+      "none": "This document has not been analyzed yet.",
+      "stale": "The analysis belongs to an earlier version. Analyze again for the current version.",
+      "fresh": "Analyzed on {{date}}: {{fields}} field(s), {{occurrences}} occurrence(s)."
+    },
+    "needsRun": "Analyze the document to see this content.",
+    "rejected": "{{n}} item(s) did not match the stored text and were discarded.",
+    "truncated": "{{n}} occurrence(s) beyond the limit were not saved.",
+    "tab": {
+      "fields": "Fields",
+      "quick": "Quick queries",
+      "search": "Search in document",
+      "summary": "Summary",
+      "issues": "Inconsistencies"
+    },
+    "page": "Page {{n}}",
+    "open": "Open",
+    "label": "label",
+    "raw": "in text",
+    "noFields": "No field matched the patterns. That does not mean the document has no data: the patterns are limited (see limitations).",
+    "kind": {
+      "extracted": "Extracted",
+      "suggested": "Suggested — please verify"
+    },
+    "confidence": {
+      "exact": "exact",
+      "high": "high",
+      "medium": "medium",
+      "heuristic": "heuristic"
+    },
+    "warn": {
+      "address": "Address detected by heuristic — please confirm"
+    },
+    "type": {
+      "cpf": "CPF",
+      "cnpj": "CNPJ",
+      "email": "Email",
+      "phone": "Mobile phone",
+      "phone_landline": "Landline",
+      "cep": "Postal code (CEP)",
+      "address": "Address",
+      "date": "Date",
+      "money": "Monetary value",
+      "percentage": "Percentage",
+      "invoice_number": "Invoice",
+      "process_number": "Case number (CNJ)",
+      "po_number": "Purchase order"
+    },
+    "quick": {
+      "note": "Answers are built only from extracted fields, each with page and snippet. This is not a natural-language question.",
+      "total_value": "Total value",
+      "due_dates": "Due dates",
+      "cpf_cnpj": "CPFs and CNPJs",
+      "dates": "Dates in the document",
+      "none": "Not found among the extracted fields. That does not prove the document lacks this information."
+    },
+    "search": {
+      "label": "Keyword in this document",
+      "disclaimer": "Keyword search; natural-language questions need external AI (off by default).",
+      "none": "No snippet found in this document."
+    },
+    "summary": {
+      "notice": "Extractive summary — original sentences selected",
+      "mode": {
+        "executive": "Executive",
+        "topics": "Topics",
+        "chronological": "Chronological",
+        "clauses": "By clauses",
+        "obligations": "By obligations"
+      },
+      "requiresAi": "requires external AI",
+      "aiOff": "External AI is off by default, so clause or obligation summaries are unavailable.",
+      "empty": "Not enough sentences (or detected dates, in chronological mode) to summarize.",
+      "truncated": "Long document: only the first 500 sentences were considered."
+    },
+    "issues": {
+      "note": "Each item applies a fixed rule and shows page and snippet. The category describes the rule, it is not legal, accounting or tax advice, and no items does not guarantee the document is correct.",
+      "none": "No inconsistency found by the rules."
+    },
+    "category": {
+      "erro_confirmado_por_regra": "Rule-based error",
+      "divergencia_identificada": "Divergence identified",
+      "exige_revisao_humana": "Needs human review"
+    },
+    "rule": {
+      "date_conflict_same_label": "Different dates for “{{label}}”: {{values}}",
+      "money_conflict_same_label": "Different amounts for “{{label}}”: {{values}}",
+      "empty_required_acroform": "Required form field is empty: {{name}}",
+      "missing_annex_reference": "The text mentions “{{annex}}”, but no document in the workspace has that annex in its name",
+      "cpf_cnpj_dv_invalid": "{{kind}} with an invalid check digit",
+      "duplicate_exact": "Exact duplicate of “{{name}}” (same SHA-256)",
+      "duplicate_similar": "Possibly similar to “{{name}}” (distance {{distance}})"
+    },
+    "similarWarn": "Possibly similar — not an exact copy (SimHash, Hamming distance ≤ {{max}}).",
+    "reportedByBrowser": "reported by the browser (not re-checked by the server)"
   }
 }

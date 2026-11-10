@@ -316,6 +316,8 @@ export const extractedFields = sqliteTable(
     fieldType: text('field_type').notNull(),
     rawValue: text('raw_value').notNull(),
     normalizedValue: text('normalized_value').notNull(),
+    /** Rótulo imediatamente anterior ("vencimento", "total"); só datas e valores. */
+    label: text('label'),
     patternId: text('pattern_id').notNull(),
     confidence: real('confidence').notNull(),
     sourceKind: text('source_kind').notNull(),
@@ -344,22 +346,35 @@ export const extractionSources = sqliteTable(
     bbox: text('bbox'),
     textSpanStart: integer('text_span_start').notNull(),
     textSpanEnd: integer('text_span_end').notNull(),
+    /** Trecho ao redor, com SNIPPET_OPEN/SNIPPET_CLOSE marcando o valor. Gerado no servidor. */
+    snippet: text('snippet'),
     patternId: text('pattern_id').notNull(),
     confidence: real('confidence').notNull(),
   },
-  (t) => [index('extraction_sources_field_idx').on(t.extractedFieldId)],
+  (t) => [
+    index('extraction_sources_field_idx').on(t.extractedFieldId),
+    index('extraction_sources_doc_idx').on(t.documentId),
+  ],
 );
 
-export const documentTasks = sqliteTable('document_tasks', {
-  id: id(),
-  documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
-  workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
-  kind: text('kind').notNull(),
-  status: text('status').notNull().default('open'),
-  payload: text('payload'),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
+/**
+ * kind = 'analysis' (metadados da última análise, 1 por documento) ou 'inconsistency' (achados
+ * por regra, payload JSON). Recriados a cada análise.
+ */
+export const documentTasks = sqliteTable(
+  'document_tasks',
+  {
+    id: id(),
+    documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
+    workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    status: text('status').notNull().default('open'),
+    payload: text('payload'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('document_tasks_doc_kind_idx').on(t.documentId, t.kind)],
+);
 
 export const documentComparisons = sqliteTable('document_comparisons', {
   id: id(),

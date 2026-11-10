@@ -98,13 +98,14 @@
     "breadcrumb": "Caminho da pasta"
   },
   "search": {
-    "label": "Buscar no texto dos documentos",
+    "label": "Busca por palavra-chave nos documentos",
     "button": "Buscar",
     "clear": "Limpar",
     "results": "Resultados para “{{q}}”",
     "none": "Nenhum trecho encontrado. A busca só alcança documentos com texto extraído.",
     "hasMore": "Há mais resultados; refine a busca.",
-    "likeMode": "Busca simplificada ativa (sem índice de texto): acentos não são ignorados e pode ser mais lenta."
+    "likeMode": "Busca simplificada ativa (sem índice de texto): acentos não são ignorados e pode ser mais lenta.",
+    "disclaimer": "Busca por palavra-chave; para perguntas em linguagem natural, é necessária IA externa (desligada por padrão)."
   },
   "document": {
     "back": "Voltar",
@@ -172,5 +173,107 @@
     "done": "Texto reconhecido e salvo como transcrição.",
     "empty": "Nenhum texto foi reconhecido.",
     "noNewText": "Nenhum texto novo foi reconhecido nessas páginas; o texto já salvo foi mantido."
+  },
+  "analysis": {
+    "title": "Análise estruturada",
+    "intro": "Campos encontrados por padrões (regex e heurísticas) no seu navegador; o servidor reconfere cada um contra o texto antes de guardar. Não é IA e não é parecer jurídico, contábil ou fiscal.",
+    "run": "Analisar documento",
+    "rerun": "Analisar de novo",
+    "running": "Analisando…",
+    "status": {
+      "none": "Este documento ainda não foi analisado.",
+      "stale": "A análise é de uma versão anterior. Analise de novo para a versão atual.",
+      "fresh": "Analisado em {{date}}: {{fields}} campo(s), {{occurrences}} ocorrência(s)."
+    },
+    "needsRun": "Analise o documento para ver este conteúdo.",
+    "rejected": "{{n}} item(ns) não conferiu(ram) com o texto armazenado e foi(ram) descartado(s).",
+    "truncated": "{{n}} ocorrência(s) além do limite não foram guardadas.",
+    "tab": {
+      "fields": "Campos",
+      "quick": "Consultas rápidas",
+      "search": "Busca no documento",
+      "summary": "Resumo",
+      "issues": "Inconsistências"
+    },
+    "page": "Página {{n}}",
+    "open": "Abrir",
+    "label": "rótulo",
+    "raw": "no texto",
+    "noFields": "Nenhum campo reconhecido pelos padrões. Isso não significa que o documento não tenha dados: os padrões são limitados (veja as limitações).",
+    "kind": {
+      "extracted": "Extraído",
+      "suggested": "Sugerido — verifique"
+    },
+    "confidence": {
+      "exact": "exato",
+      "high": "alto",
+      "medium": "médio",
+      "heuristic": "heurística"
+    },
+    "warn": {
+      "address": "Endereço detectado por heurística — confirme"
+    },
+    "type": {
+      "cpf": "CPF",
+      "cnpj": "CNPJ",
+      "email": "E-mail",
+      "phone": "Telefone celular",
+      "phone_landline": "Telefone fixo",
+      "cep": "CEP",
+      "address": "Endereço",
+      "date": "Data",
+      "money": "Valor monetário",
+      "percentage": "Percentual",
+      "invoice_number": "Nota fiscal",
+      "process_number": "Nº de processo (CNJ)",
+      "po_number": "Pedido de compra"
+    },
+    "quick": {
+      "note": "Respostas montadas só a partir dos campos extraídos, cada uma com página e trecho. Não é uma pergunta em linguagem natural.",
+      "total_value": "Valor total",
+      "due_dates": "Vencimentos",
+      "cpf_cnpj": "CPFs e CNPJs",
+      "dates": "Datas no documento",
+      "none": "Não encontrado entre os campos extraídos. Isso não prova que o documento não tenha essa informação."
+    },
+    "search": {
+      "label": "Palavra-chave neste documento",
+      "disclaimer": "Busca por palavra-chave; para perguntas em linguagem natural, é necessária IA externa (desligada por padrão).",
+      "none": "Nenhum trecho encontrado neste documento."
+    },
+    "summary": {
+      "notice": "Resumo extrativo — frases originais selecionadas",
+      "mode": {
+        "executive": "Executivo",
+        "topics": "Tópicos",
+        "chronological": "Cronológico",
+        "clauses": "Por cláusulas",
+        "obligations": "Por obrigações"
+      },
+      "requiresAi": "requer IA externa",
+      "aiOff": "IA externa está desligada por padrão; por isso resumos por cláusulas ou obrigações não estão disponíveis.",
+      "empty": "Não há frases suficientes (ou datas detectadas, no modo cronológico) para resumir.",
+      "truncated": "Documento longo: só as primeiras 500 frases foram consideradas."
+    },
+    "issues": {
+      "note": "Cada item aplica uma regra fixa e mostra página e trecho. A categoria descreve a regra, não é parecer jurídico, contábil ou fiscal, e a ausência de itens não garante que o documento esteja correto.",
+      "none": "Nenhuma inconsistência encontrada pelas regras."
+    },
+    "category": {
+      "erro_confirmado_por_regra": "Erro por regra",
+      "divergencia_identificada": "Divergência identificada",
+      "exige_revisao_humana": "Exige revisão humana"
+    },
+    "rule": {
+      "date_conflict_same_label": "Datas diferentes para “{{label}}”: {{values}}",
+      "money_conflict_same_label": "Valores diferentes para “{{label}}”: {{values}}",
+      "empty_required_acroform": "Campo obrigatório vazio no formulário: {{name}}",
+      "missing_annex_reference": "O texto menciona “{{annex}}”, mas nenhum documento do workspace tem esse anexo no nome",
+      "cpf_cnpj_dv_invalid": "{{kind}} com dígito verificador inválido",
+      "duplicate_exact": "Duplicado exato de “{{name}}” (mesmo SHA-256)",
+      "duplicate_similar": "Possivelmente similar a “{{name}}” (distância {{distance}})"
+    },
+    "similarWarn": "Possivelmente similar — não é cópia exata (SimHash, distância de Hamming ≤ {{max}}).",
+    "reportedByBrowser": "informado pelo navegador (não reconferido pelo servidor)"
   }
 }

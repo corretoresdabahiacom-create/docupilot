@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { AnalysisCard } from '../components/AnalysisCard';
 import { OcrPanel } from '../components/OcrPanel';
 import { PdfPreview } from '../components/preview/PdfPreview';
 import { TextPreview } from '../components/preview/TextPreview';
@@ -368,6 +369,15 @@ export function DocumentPage() {
         sizeBytes={currentVersion?.sizeBytes ?? 0}
         canEdit={canEdit}
       />
+      {doc.status === 'extracted' && (
+        <AnalysisCard
+          workspaceId={ws}
+          documentId={doc.id}
+          versionId={doc.currentVersionId}
+          mime={doc.mime}
+          canEdit={canEdit}
+        />
+      )}
       <PreviewCard workspaceId={ws} detail={d} />
 
       <Card>

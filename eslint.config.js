@@ -30,6 +30,12 @@ export default tseslint.config(
     },
   },
   {
+    // Regex dos padrões de extração: o escape explícito de `-` e `/` em classes de caracteres é
+    // mantido de propósito (legibilidade e segurança ao editar), sem efeito no comportamento.
+    files: ['packages/shared/src/extraction/**'],
+    rules: { 'no-useless-escape': 'off' },
+  },
+  {
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

@@ -252,6 +252,7 @@ export function DocumentsPage() {
       )}
 
       <Card>
+        <p className="mb-2 text-xs text-[var(--muted)]">{t('search.disclaimer')}</p>
         <form onSubmit={submitSearch} role="search" className="flex flex-wrap items-end gap-2">
           <div className="min-w-0 flex-1">
             <Field

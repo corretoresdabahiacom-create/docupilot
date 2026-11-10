@@ -5,6 +5,7 @@ export const DEFAULT_QUOTAS = {
   maxFileBytes: 25 * 1024 ** 2,
   documentsPerWorkspace: 200,
   extractionsPerMonth: 300,
+  analysesPerMonth: 300,
   textCharsPerWorkspace: 5_000_000,
   exportsPerMonth: 100,
   membersPerWorkspace: 5,
@@ -29,6 +30,8 @@ export const MAX_PAGES_PER_DOCUMENT = 300;
 export const MAX_CHARS_PER_PAGE = 30_000;
 export const MAX_CHARS_PER_REQUEST = 150_000;
 export const MAX_SEARCH_RESULTS = 50;
+/** Fontes (ocorrências) guardadas por campo extraído; as demais são contadas, não gravadas. */
+export const MAX_SOURCES_PER_FIELD = 5;
 export const OCR_MAX_PAGES_PER_RUN = 10;
 export const OCR_MAX_IMAGE_BYTES = 5 * 1024 ** 2;
 

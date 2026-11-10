@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   api,
+  type AnalysisResponse,
   type DocumentDetail,
   type DocumentRow,
   type FolderRow,
@@ -38,12 +39,22 @@ export const useDocument = (workspaceId: string | undefined, documentId: string 
     enabled: Boolean(workspaceId && documentId),
   });
 
-export const useSearch = (workspaceId: string | undefined, q: string) =>
+export const useAnalysis = (workspaceId: string | undefined, documentId: string | undefined) =>
   useQuery({
-    queryKey: ['search', workspaceId, q],
+    queryKey: ['analysis', workspaceId, documentId],
+    queryFn: () =>
+      api<AnalysisResponse>(`/workspaces/${workspaceId}/documents/${documentId}/analysis`),
+    enabled: Boolean(workspaceId && documentId),
+  });
+
+export const useSearch = (workspaceId: string | undefined, q: string, documentId?: string) =>
+  useQuery({
+    queryKey: ['search', workspaceId, q, documentId ?? null],
     queryFn: () =>
       api<{ mode: 'fts' | 'like'; hasMore: boolean; results: SearchHit[] }>(
-        `/workspaces/${workspaceId}/search?q=${encodeURIComponent(q)}`,
+        `/workspaces/${workspaceId}/search?q=${encodeURIComponent(q)}${
+          documentId ? `&documentId=${documentId}` : ''
+        }`,
       ),
     enabled: Boolean(workspaceId) && q.trim().length >= 2,
     retry: false,

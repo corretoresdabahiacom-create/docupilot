@@ -2,7 +2,7 @@
 
 Plataforma multi-tenant para organizar, extrair, comparar, preencher e gerar documentos, com rastreabilidade de origem e revisão humana. **Sem IA generativa por padrão**: o que é extração determinística, heurística ou IA é sempre declarado.
 
-> Estado: **Fase 2 (pastas, documentos, extração, busca, versões)** concluída. Siga as fases em ordem; cada uma termina com aprovação.
+> Estado: **Fase 3 (extração estruturada e análise determinística)** concluída, aguardando aprovação; a Fase 2 foi aprovada verbalmente ("aprovo depois"). Siga as fases em ordem; cada uma termina com aprovação.
 
 ## Estrutura
 
@@ -28,6 +28,7 @@ Teste de fumaça no navegador (Chromium): compile o front, suba `apps/api/e2e/se
 ## Documentação
 
 - [Decisões de arquitetura](docs/decisions.md)
+- [Catálogo de heurísticas e padrões](docs/heuristics.md)
 - [Limites do free tier Cloudflare](docs/free-tier-limits.md)
 - [Arquitetura](docs/architecture.md) · [Segurança](docs/security.md) · [Variáveis de ambiente](docs/env-vars.md) · [Limitações](docs/limitations.md)
 

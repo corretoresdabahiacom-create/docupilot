@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { secureHeaders } from 'hono/secure-headers';
 import { AppError } from './errors';
 import { csrfOrigin } from './middleware/origin';
+import { analysisRoutes } from './routes/analysis';
 import { authRoutes } from './routes/auth';
 import { healthRoutes } from './routes/health';
 import { consentRoutes } from './routes/consents';
@@ -31,6 +32,7 @@ export function createApp(deps: AppDeps) {
   app.route('/workspaces', uploadRoutes);
   app.route('/workspaces', folderRoutes);
   app.route('/workspaces', documentRoutes);
+  app.route('/workspaces', analysisRoutes);
   app.route('/workspaces', searchRoutes);
   app.route('/me/consents', consentRoutes);
 
