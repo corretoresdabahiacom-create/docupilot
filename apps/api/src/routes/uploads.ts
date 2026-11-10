@@ -1,7 +1,9 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import {
+  MAX_VERSIONS_PER_DOCUMENT,
   UPLOAD_URL_TTL_SECONDS,
+  uploadPrecheckSchema,
   uploadRequestSchema,
   validateUpload,
   type ErrorCode,
@@ -11,6 +13,7 @@ import { verifyTurnstile } from '../auth/turnstile';
 import { runBatch } from '../db/batch';
 import {
   documentHashes,
+  documentMetadata,
   documents,
   documentVersions,
   folders,
@@ -42,6 +45,7 @@ async function assertQuota(
   quotas: Quotas,
   workspaceId: string,
   size: number,
+  newDocument = true,
 ): Promise<void> {
   const ws = (
     await db
@@ -59,7 +63,7 @@ async function assertQuota(
   const exceeded =
     size > quotas.maxFileBytes ||
     ws.used + size > quotas.storageBytesPerWorkspace ||
-    ws.docs + 1 > quotas.documentsPerWorkspace ||
+    (newDocument && ws.docs + 1 > quotas.documentsPerWorkspace) ||
     Number(total ?? 0) + size > quotas.storageBytesGlobal;
   if (exceeded) {
     throw new AppError(
@@ -69,6 +73,61 @@ async function assertQuota(
     );
   }
 }
+
+/** Documento do workspace que já tem versão com este SHA-256 (duplicado exato). */
+async function findDuplicate(db: Db, workspaceId: string, sha256: string) {
+  return (
+    await db
+      .select({ documentId: documentVersions.documentId, name: documents.name })
+      .from(documentHashes)
+      .innerJoin(documentVersions, eq(documentVersions.id, documentHashes.documentVersionId))
+      .innerJoin(documents, eq(documents.id, documentVersions.documentId))
+      .where(and(eq(documentHashes.workspaceId, workspaceId), eq(documentHashes.sha256, sha256)))
+      .limit(1)
+  )[0];
+}
+
+async function versionStats(db: Db, documentId: string) {
+  const row = (
+    await db
+      .select({
+        count: sql<number>`count(*)`,
+        max: sql<number>`coalesce(max(${documentVersions.versionNumber}), 0)`,
+      })
+      .from(documentVersions)
+      .where(eq(documentVersions.documentId, documentId))
+  )[0];
+  return { count: Number(row?.count ?? 0), max: Number(row?.max ?? 0) };
+}
+
+uploadRoutes.post(
+  '/:workspaceId/uploads/precheck',
+  requireWorkspacePermission('edit'),
+  async (c) => {
+    const { db } = c.get('deps');
+    const { workspaceId } = c.get('member');
+    const input = await parseBody(c, uploadPrecheckSchema);
+    const duplicate = await findDuplicate(db, workspaceId, input.sha256);
+    const sameName = (
+      await db
+        .select({ documentId: documents.id, name: documents.name })
+        .from(documents)
+        .where(
+          and(
+            eq(documents.workspaceId, workspaceId),
+            eq(documents.name, input.fileName),
+            input.folderId ? eq(documents.folderId, input.folderId) : isNull(documents.folderId),
+          ),
+        )
+        .limit(1)
+    )[0];
+    return c.json({
+      duplicate: duplicate ?? null,
+      // Mesmo nome com conteúdo diferente: o cliente pode oferecer "enviar como nova versão".
+      sameName: sameName && sameName.documentId !== duplicate?.documentId ? sameName : null,
+    });
+  },
+);
 
 uploadRoutes.post('/:workspaceId/uploads', requireWorkspacePermission('edit'), async (c) => {
   const { db, storage, config } = c.get('deps');
@@ -81,13 +140,38 @@ uploadRoutes.post('/:workspaceId/uploads', requireWorkspacePermission('edit'), a
   }
 
   const quotas = await loadQuotas(db);
-  await assertQuota(db, quotas, workspaceId, input.size);
+  let folderId = input.folderId ?? null;
+  if (input.documentId) {
+    const doc = (
+      await db
+        .select({ id: documents.id, folderId: documents.folderId })
+        .from(documents)
+        .where(and(eq(documents.id, input.documentId), eq(documents.workspaceId, workspaceId)))
+        .limit(1)
+    )[0];
+    if (!doc) throw notFound();
+    if ((await versionStats(db, doc.id)).count >= MAX_VERSIONS_PER_DOCUMENT) {
+      throw new AppError('QUOTA_EXCEEDED', 429, 'Limite de versões do documento atingido.');
+    }
+    folderId = doc.folderId;
+  }
+  await assertQuota(db, quotas, workspaceId, input.size, !input.documentId);
 
-  if (input.folderId) {
+  if (!input.allowDuplicate) {
+    const dup = await findDuplicate(db, workspaceId, input.sha256);
+    if (dup) {
+      throw new AppError('DUPLICATE_FILE', 409, 'Já existe um arquivo idêntico neste workspace.', {
+        documentId: dup.documentId,
+        name: dup.name,
+      });
+    }
+  }
+
+  if (!input.documentId && folderId) {
     const folder = await db
       .select({ id: folders.id })
       .from(folders)
-      .where(and(eq(folders.id, input.folderId), eq(folders.workspaceId, workspaceId)))
+      .where(and(eq(folders.id, folderId), eq(folders.workspaceId, workspaceId)))
       .limit(1);
     if (folder.length === 0) throw notFound();
   }
@@ -106,7 +190,8 @@ uploadRoutes.post('/:workspaceId/uploads', requireWorkspacePermission('edit'), a
     db.insert(uploads).values({
       id: uploadId,
       workspaceId,
-      folderId: input.folderId ?? null,
+      folderId,
+      documentId: input.documentId ?? null,
       userId: user.id,
       fileName: input.fileName,
       declaredMime: input.mime,
@@ -210,7 +295,87 @@ uploadRoutes.post(
     if (!check.ok)
       return reject(check.code, check.code.toLowerCase(), FILE_ERROR_STATUS[check.code] ?? 422);
 
-    await assertQuota(db, quotas, workspaceId, head.size);
+    await assertQuota(db, quotas, workspaceId, head.size, !upload.documentId);
+
+    if (upload.documentId) {
+      const doc = (
+        await db
+          .select({ id: documents.id, name: documents.name })
+          .from(documents)
+          .where(and(eq(documents.id, upload.documentId), eq(documents.workspaceId, workspaceId)))
+          .limit(1)
+      )[0];
+      if (!doc) return reject('NOT_FOUND', 'document_missing', 404);
+      const stats = await versionStats(db, doc.id);
+      if (stats.count >= MAX_VERSIONS_PER_DOCUMENT) {
+        return reject('QUOTA_EXCEEDED', 'version_limit', 429);
+      }
+      const newVersionId = crypto.randomUUID();
+      const versionNumber = stats.max + 1;
+      try {
+        await runBatch(db, [
+          db.insert(documentVersions).values({
+            id: newVersionId,
+            documentId: doc.id,
+            workspaceId,
+            versionNumber,
+            storageKey: upload.storageKey,
+            sizeBytes: head.size,
+            mime: check.mime,
+            sha256: upload.sha256,
+            createdBy: user.id,
+          }),
+          db.insert(documentHashes).values({
+            workspaceId,
+            documentVersionId: newVersionId,
+            sha256: upload.sha256,
+            verifiedByStorage: storage.verifiesChecksumOnUpload,
+          }),
+          db
+            .update(documents)
+            .set({
+              currentVersionId: newVersionId,
+              mime: check.mime,
+              status: 'needs_text',
+              updatedAt: Date.now(),
+            })
+            .where(eq(documents.id, doc.id)),
+          // Metadados da versão anterior ficam obsoletos até a nova extração.
+          db.delete(documentMetadata).where(eq(documentMetadata.documentId, doc.id)),
+          db
+            .update(workspaces)
+            .set({ storageBytesUsed: sql`${workspaces.storageBytesUsed} + ${head.size}` })
+            .where(eq(workspaces.id, workspaceId)),
+          db.update(uploads).set({ status: 'completed' }).where(eq(uploads.id, upload.id)),
+          auditEntry(db, {
+            userId: user.id,
+            workspaceId,
+            action: 'document.version_added',
+            targetType: 'document',
+            targetId: doc.id,
+            meta: { versionNumber, size: head.size },
+          }),
+        ]);
+      } catch (err) {
+        // Duas conclusões simultâneas disputando o mesmo número de versão.
+        if (err instanceof Error && /UNIQUE/i.test(`${err.message} ${String(err.cause ?? '')}`)) {
+          throw new AppError(
+            'CONFLICT',
+            409,
+            'Outra versão foi criada ao mesmo tempo. Tente de novo.',
+          );
+        }
+        throw err;
+      }
+      return c.json(
+        {
+          document: { id: doc.id, name: doc.name, mime: check.mime, status: 'needs_text' },
+          versionId: newVersionId,
+          versionNumber,
+        },
+        201,
+      );
+    }
 
     const documentId = crypto.randomUUID();
     const versionId = crypto.randomUUID();
@@ -264,6 +429,7 @@ uploadRoutes.post(
       {
         document: { id: documentId, name: upload.fileName, mime: check.mime, status: 'needs_text' },
         versionId,
+        versionNumber: 1,
       },
       201,
     );

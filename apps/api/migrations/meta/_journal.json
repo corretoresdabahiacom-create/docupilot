@@ -15,6 +15,20 @@
       "when": 1794242730869,
       "tag": "0001_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794257845023,
+      "tag": "0002_phase2_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794257845534,
+      "tag": "0003_fts_search",
+      "breakpoints": true
     }
   ]
 }

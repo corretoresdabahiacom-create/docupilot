@@ -145,6 +145,8 @@ export const workspaces = sqliteTable(
     isPersonal: integer('is_personal', { mode: 'boolean' }).notNull().default(false),
     storageBytesUsed: integer('storage_bytes_used').notNull().default(0),
     documentCount: integer('document_count').notNull().default(0),
+    /** Total de caracteres de texto extraído guardados no D1 (limite por workspace). */
+    textCharsUsed: integer('text_chars_used').notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -234,6 +236,8 @@ export const documentMetadata = sqliteTable('document_metadata', {
     .references(() => documents.id, { onDelete: 'cascade' }),
   language: text('language'),
   pageCount: integer('page_count'),
+  /** 'page' (PDF/OCR) ou 'section' (DOCX/TXT/MD/CSV, que não têm páginas reais). */
+  pageKind: text('page_kind').notNull().default('page'),
   extractedBy: text('extracted_by'),
   textCharCount: integer('text_char_count'),
   updatedAt: updatedAt(),
@@ -263,6 +267,8 @@ export const uploads = sqliteTable(
     id: id(),
     workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
     folderId: text('folder_id'),
+    /** Preenchido quando o envio é uma nova versão de um documento existente. */
+    documentId: text('document_id'),
     userId: fk('user_id').references(() => users.id),
     fileName: text('file_name').notNull(),
     declaredMime: text('declared_mime').notNull(),
@@ -278,6 +284,25 @@ export const uploads = sqliteTable(
     index('uploads_ws_idx').on(t.workspaceId),
     index('uploads_expires_idx').on(t.expiresAt),
     check('uploads_status_ck', sql`${t.status} IN ('pending','completed','rejected','expired')`),
+  ],
+);
+
+/** Texto extraído por página/seção. `id` inteiro estável alimenta o índice FTS5 (migração 0003). */
+export const documentPages = sqliteTable(
+  'document_pages',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    versionId: fk('version_id').references(() => documentVersions.id, { onDelete: 'cascade' }),
+    documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
+    workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
+    pageNumber: integer('page_number').notNull(),
+    text: text('text').notNull(),
+    charCount: integer('char_count').notNull(),
+  },
+  (t) => [
+    uniqueIndex('doc_pages_version_page_uq').on(t.versionId, t.pageNumber),
+    index('doc_pages_workspace_idx').on(t.workspaceId),
+    index('doc_pages_document_idx').on(t.documentId),
   ],
 );
 

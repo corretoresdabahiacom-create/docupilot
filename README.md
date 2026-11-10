@@ -2,7 +2,7 @@
 
 Plataforma multi-tenant para organizar, extrair, comparar, preencher e gerar documentos, com rastreabilidade de origem e revisão humana. **Sem IA generativa por padrão**: o que é extração determinística, heurística ou IA é sempre declarado.
 
-> Estado: **Fase 1 (fundação)** concluída. Siga as fases em ordem; cada uma termina com aprovação.
+> Estado: **Fase 2 (pastas, documentos, extração, busca, versões)** concluída. Siga as fases em ordem; cada uma termina com aprovação.
 
 ## Estrutura
 
@@ -22,6 +22,8 @@ pnpm --filter @docupilot/web build
 ```
 
 A API roda em Workers; para rodar localmente é preciso criar um D1 (`wrangler d1 create docupilot`), colocar o id em `apps/api/wrangler.toml`, aplicar as migrações (`wrangler d1 migrations apply docupilot --local`) e subir `pnpm --filter @docupilot/api dev`. O front usa proxy para `localhost:8787` (`pnpm --filter @docupilot/web dev`).
+
+Teste de fumaça no navegador (Chromium): compile o front, suba `apps/api/e2e/server.ts` com `tsx` e rode `node apps/web/e2e/smoke.mjs` (Playwright não é dependência do repositório).
 
 ## Documentação
 

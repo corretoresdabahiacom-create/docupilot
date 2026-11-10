@@ -5,6 +5,7 @@ export class AppError extends Error {
     public readonly code: ErrorCode,
     public readonly status: number,
     message: string,
+    public readonly details?: Record<string, string | number | boolean>,
   ) {
     super(message);
   }

@@ -1,5 +1,8 @@
 {
-  "app": { "name": "DocuPilot AI", "tagline": "Organized documents, with traceable origin." },
+  "app": {
+    "name": "DocuPilot AI",
+    "tagline": "Organized documents, with traceable origin."
+  },
   "nav": {
     "documents": "Documents",
     "logout": "Sign out",
@@ -32,18 +35,34 @@
     "title": "Upload document",
     "choose": "Choose file",
     "send": "Upload",
-    "hashing": "Computing file fingerprint…",
-    "uploading": "Uploading…",
-    "validating": "Validating file…",
     "done": "File uploaded and validated.",
-    "allowed": "Accepted: PDF, JPG, PNG, DOCX, TXT, CSV and MD (up to 25 MB)."
+    "allowed": "Accepted: PDF, JPG, PNG, DOCX, TXT, CSV and MD (up to 25 MB).",
+    "newVersionTitle": "Upload new version",
+    "step": {
+      "hashing": "Computing the file fingerprint…",
+      "checking": "Checking for duplicates…",
+      "uploading": "Uploading…",
+      "validating": "Validating the file…",
+      "extracting": "Extracting text in your browser…"
+    },
+    "duplicate": "An identical file already exists in this workspace: “{{name}}”. Upload anyway?",
+    "sameName": "A document named “{{name}}” already exists in this folder with different content. What would you like to do?",
+    "openExisting": "Open the existing one",
+    "asNewVersion": "Upload as new version",
+    "asNewDocument": "Create a new document",
+    "sendAnyway": "Upload anyway"
   },
   "status": {
     "storageOff": "File storage is not configured: uploads are unavailable.",
     "offline": "You are offline. Uploading and editing require a connection.",
     "demo": "Development environment"
   },
-  "theme": { "label": "Theme", "system": "System", "light": "Light", "dark": "Dark" },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
   "errors": {
     "UNAUTHENTICATED": "Invalid email or password, or session expired.",
     "FORBIDDEN": "You do not have permission to do that.",
@@ -58,6 +77,100 @@
     "RATE_LIMITED": "Too many attempts. Try again later.",
     "CONFLICT": "Conflicting operation (for example, email already registered).",
     "INTERNAL": "Internal error. Please try again.",
-    "NETWORK": "Network failure."
+    "NETWORK": "Network failure.",
+    "DUPLICATE_FILE": "An identical file already exists in this workspace.",
+    "CONSENT_REQUIRED": "You must authorize in-browser OCR before continuing.",
+    "DOWNLOAD_FAILED": "Could not download the file to process it in this browser.",
+    "OCR_FAILED": "OCR failed in this browser. Try a smaller file."
+  },
+  "common": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete"
+  },
+  "folders": {
+    "name": "Folder name",
+    "rename": "Rename",
+    "confirmDelete": "Delete the folder “{{name}}”? It must be empty.",
+    "new": "New folder",
+    "create": "Create folder",
+    "breadcrumb": "Folder path"
+  },
+  "search": {
+    "label": "Search document text",
+    "button": "Search",
+    "clear": "Clear",
+    "results": "Results for “{{q}}”",
+    "none": "No matching passage found. Search only covers documents with extracted text.",
+    "hasMore": "There are more results; refine your search.",
+    "likeMode": "Simplified search is active (no text index): accents are not ignored and it may be slower."
+  },
+  "document": {
+    "back": "Back",
+    "updated": "updated {{date}}",
+    "download": "Download",
+    "confirmDelete": "Delete “{{name}}” and all its versions? This cannot be undone.",
+    "rename": "Document name",
+    "moveTo": "Move to folder"
+  },
+  "extraction": {
+    "title": "Text extraction",
+    "pages": "{{n}} page(s)",
+    "sections": "{{n}} section(s) (this format has no pages)",
+    "chars": "{{n}} characters of text",
+    "byText": "Read from the file's text layer in your browser (no AI). Check it against the original.",
+    "byOcr": "Recognized by experimental in-browser OCR. It may contain errors: check it against the original.",
+    "pending": "The text has not been extracted yet.",
+    "failed": "Could not extract readable text from this file (unreadable, protected or too large).",
+    "needsOcr": "This file has no selectable text (image or scanned PDF). You can try in-browser OCR.",
+    "running": "Extracting…",
+    "run": "Extract text",
+    "retry": "Try again"
+  },
+  "preview": {
+    "title": "Preview",
+    "tab": {
+      "original": "Original",
+      "text": "Extracted text"
+    },
+    "noText": "No extracted text to show.",
+    "page": "Page {{n}}",
+    "section": "Section {{n}}",
+    "loadMore": "Load more",
+    "pdfFailed": "Could not load the PDF preview. Use “Download”.",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{n}} of {{total}}",
+    "docxNote": "Text only: layout, tables and images of the DOCX are not reproduced."
+  },
+  "versions": {
+    "title": "Version history",
+    "number": "Version {{n}}",
+    "current": "current",
+    "makeCurrent": "Make current",
+    "confirmDelete": "Delete version {{n}}?"
+  },
+  "ocr": {
+    "title": "In-browser OCR (experimental)",
+    "explain": "Recognition runs on your computer; the document is not sent to third parties. The result is an automatic transcription and must be checked.",
+    "limitDesktop": "Available on desktop computers only.",
+    "limitPages": "At most {{n}} pages per run.",
+    "limitImage": "Images up to {{mb}} MB.",
+    "limitCdn": "The OCR engine and language data are downloaded from the public jsDelivr CDN; no document content is sent.",
+    "block": {
+      "mobile": "In-browser OCR is not available on phones and tablets.",
+      "image_too_large": "Image above {{mb}} MB: shrink the file to use OCR.",
+      "unsupported": "This file type does not use OCR."
+    },
+    "consent": "I understand it is experimental and authorize running OCR in this browser.",
+    "start": "Recognize text",
+    "continue": "Continue from page {{n}}",
+    "running": "Recognizing…",
+    "progress": "Page {{page}} ({{done}} of {{total}} done)",
+    "revoke": "Revoke OCR consent",
+    "done": "Text recognized and saved as a transcription.",
+    "empty": "No text was recognized.",
+    "noNewText": "No new text was recognized on these pages; the text already saved was kept."
   }
 }

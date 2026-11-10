@@ -60,3 +60,29 @@ Ao se aproximar do orçamento de escritas, operações não essenciais são recu
 ## D6. GitHub
 
 O repositório `corretoresdabahiacom-create/docupilot` recebe o código ao final de cada fase, com autorização explícita do usuário para push.
+
+## D7. Busca textual: FTS5 com alternativa em LIKE (Fase 2)
+
+Tabela virtual `document_pages_fts` (FTS5, conteúdo externo sobre `document_pages`, tokenizer `unicode61 remove_diacritics 2`) mantida por três gatilhos (insert/delete/update). Ordenação por `bm25`, trecho com `snippet()` e marcadores de controle que a ingestão remove do texto. Só a **versão atual** de cada documento é pesquisada, sempre filtrando por workspace. Se o banco não tiver FTS5, a rota cai para `LIKE` (não ignora acentos, mais lenta; a interface avisa).
+
+- Suporte a FTS5 no D1: confirmado na documentação oficial de SQL statements. **Não verificado**: custo em linhas escritas das tabelas sombra do FTS5 no D1 Free (100.000 escritas/dia) nem o comportamento em D1 real; só foi testado em libSQL local.
+- O índice FTS5 é global ao banco; o filtro de workspace é aplicado depois do `MATCH`. Isolamento correto (testado), mas o custo de leitura cresce com o total do banco.
+- Mitigações de custo: máx. 300 páginas por documento, 10 páginas por requisição, 5.000.000 de caracteres de texto por workspace, 300 extrações por mês.
+
+## D8. Texto extraído por página ou seção
+
+`document_pages` guarda o texto por página (PDF/OCR) ou por **seção** (DOCX, TXT, MD, CSV, que não têm páginas reais; ~6.000 caracteres). O servidor nunca confia no cliente: higieniza caracteres de controle, limita tamanho e recusa texto com sinais inequívocos de corrupção. `document_metadata.extracted_by` diz se veio da camada de texto (`client`) ou de OCR (`client_ocr`). PDF sem texto → `needs_ocr`; PDF com texto ilegível → `extraction_failed`.
+
+## D9. Duplicados e versões
+
+- Mesmo SHA-256 no workspace: `409 DUPLICATE_FILE` com o documento existente; `allowDuplicate` permite enviar mesmo assim. `POST /uploads/precheck` avisa antes do envio e também sugere "nova versão" quando o nome já existe na pasta com conteúdo diferente.
+- Nova versão: envio com `documentId`; máximo de 50 versões (`QUOTA_EXCEEDED`). A nova versão vira a atual e o documento volta para `needs_text`. É possível tornar atual uma versão antiga e excluir versões não atuais.
+- Limitação: `document_metadata` é por documento, não por versão; ao trocar a versão atual ele é recalculado só com contagem de páginas e caracteres.
+
+## D10. OCR no navegador: opt-in e consentimento
+
+tesseract.js no cliente, só em desktop (verificação feita no navegador; o servidor não consegue confirmar o dispositivo), até 10 páginas por execução e imagens até 5 MB. O consentimento fica em `user_consents` (revogável) e o **servidor recusa** texto `client_ocr` sem consentimento ativo (`CONSENT_REQUIRED`). O documento não sai do computador, mas por padrão o tesseract.js baixa **worker, núcleo WASM e idiomas do jsDelivr** (verificado no código da biblioteca); `VITE_OCR_WORKER_PATH`, `VITE_OCR_CORE_PATH` e `VITE_OCR_LANG_PATH` permitem hospedar cópias próprias.
+
+## D11. Exclusão
+
+Documento: o banco é limpo primeiro (páginas, índice, hashes, metadados, versões) e os objetos depois. Se a remoção no armazenamento falhar, sobram objetos órfãos (custo), nunca documentos apontando para arquivo inexistente; a resposta traz `storageCleaned`. Faxina de órfãos por cron fica para fase posterior. Pasta só é excluída se estiver vazia.

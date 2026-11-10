@@ -20,4 +20,6 @@ export interface StorageProvider {
   head(key: string): Promise<{ size: number } | null>;
   readRange(key: string, offset: number, length: number): Promise<Uint8Array>;
   delete(key: string): Promise<void>;
+  /** Remove vários objetos (R2: até 1.000 chaves por chamada). */
+  deleteMany(keys: string[]): Promise<void>;
 }

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout';
 import { useMe } from './lib/queries';
 import { AuthPage } from './pages/AuthPage';
+import { DocumentPage } from './pages/DocumentPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 
 export function App() {
@@ -22,6 +23,10 @@ export function App() {
           element={signedIn ? <Navigate to="/" replace /> : <AuthPage mode="register" />}
         />
         <Route path="/" element={signedIn ? <DocumentsPage /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/documents/:documentId"
+          element={signedIn ? <DocumentPage /> : <Navigate to="/login" replace />}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ALLOWED_MIME_TYPES } from './files';
+import { MAX_CHARS_PER_PAGE, MAX_PAGES_PER_DOCUMENT, MAX_PAGES_PER_REQUEST } from './quotas';
 
 export const emailSchema = z.string().trim().toLowerCase().email().max(254);
 
@@ -26,8 +27,81 @@ export const uploadRequestSchema = z.object({
   mime: z.enum(ALLOWED_MIME_TYPES),
   size: z.number().int().positive(),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  /** Quando presente, o envio vira uma nova versão deste documento. */
+  documentId: z.string().min(1).optional(),
+  /** Permite enviar mesmo que o mesmo SHA-256 já exista no workspace. */
+  allowDuplicate: z.boolean().optional(),
   turnstileToken: z.string().min(1).optional(),
 });
+
+export const uploadPrecheckSchema = z.object({
+  fileName: z.string().trim().min(1).max(255),
+  folderId: z.string().min(1).nullable().optional(),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+});
+
+/** Nome de pasta sem barras nem caracteres de controle. */
+function isValidFolderName(value: string): boolean {
+  for (const ch of value) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code < 0x20 || code === 0x7f || ch === '/' || ch === '\\') return false;
+  }
+  return true;
+}
+export const folderNameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .refine(isValidFolderName, 'invalid');
+export const folderCreateSchema = z.object({
+  name: folderNameSchema,
+  parentId: z.string().min(1).nullable().optional(),
+});
+export const folderUpdateSchema = z
+  .object({ name: folderNameSchema.optional(), parentId: z.string().min(1).nullable().optional() })
+  .refine((v) => v.name !== undefined || v.parentId !== undefined, 'empty');
+
+export const documentPatchSchema = z
+  .object({
+    name: z.string().trim().min(1).max(255).optional(),
+    folderId: z.string().min(1).nullable().optional(),
+  })
+  .refine((v) => v.name !== undefined || v.folderId !== undefined, 'empty');
+
+export const EXTRACTORS = ['client', 'client_ocr'] as const;
+export const PAGE_KINDS = ['page', 'section'] as const;
+
+export const pagesUploadSchema = z.object({
+  pages: z
+    .array(
+      z.object({
+        pageNumber: z.number().int().min(1).max(MAX_PAGES_PER_DOCUMENT),
+        text: z.string().max(MAX_CHARS_PER_PAGE),
+      }),
+    )
+    .min(1)
+    .max(MAX_PAGES_PER_REQUEST),
+  extractedBy: z.enum(EXTRACTORS),
+});
+
+export const extractionCompleteSchema = z.object({
+  status: z.enum(['extracted', 'needs_ocr', 'extraction_failed']),
+  pageCount: z.number().int().min(0).max(MAX_PAGES_PER_DOCUMENT).optional(),
+  pageKind: z.enum(PAGE_KINDS).default('page'),
+  extractedBy: z.enum(EXTRACTORS).default('client'),
+  language: z.string().max(16).optional(),
+});
+
+export const searchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(200),
+  folderId: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  offset: z.coerce.number().int().min(0).max(1000).default(0),
+});
+
+export const CONSENT_PURPOSES = ['browser_ocr'] as const;
+export const consentSchema = z.object({ purpose: z.enum(CONSENT_PURPOSES) });
 
 export const uploadCompleteSchema = z.object({
   uploadId: z.string().min(1),

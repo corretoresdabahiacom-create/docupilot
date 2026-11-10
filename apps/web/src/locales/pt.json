@@ -1,5 +1,8 @@
 {
-  "app": { "name": "DocuPilot AI", "tagline": "Documentos organizados, com origem rastreável." },
+  "app": {
+    "name": "DocuPilot AI",
+    "tagline": "Documentos organizados, com origem rastreável."
+  },
   "nav": {
     "documents": "Documentos",
     "logout": "Sair",
@@ -32,18 +35,34 @@
     "title": "Enviar documento",
     "choose": "Escolher arquivo",
     "send": "Enviar",
-    "hashing": "Calculando impressão digital do arquivo…",
-    "uploading": "Enviando…",
-    "validating": "Validando o arquivo…",
     "done": "Arquivo enviado e validado.",
-    "allowed": "Aceitos: PDF, JPG, PNG, DOCX, TXT, CSV e MD (até 25 MB)."
+    "allowed": "Aceitos: PDF, JPG, PNG, DOCX, TXT, CSV e MD (até 25 MB).",
+    "newVersionTitle": "Enviar nova versão",
+    "step": {
+      "hashing": "Calculando impressão digital do arquivo…",
+      "checking": "Verificando duplicidade…",
+      "uploading": "Enviando…",
+      "validating": "Validando o arquivo…",
+      "extracting": "Extraindo o texto no seu navegador…"
+    },
+    "duplicate": "Já existe um arquivo idêntico neste workspace: “{{name}}”. Deseja enviar mesmo assim?",
+    "sameName": "Já existe um documento chamado “{{name}}” nesta pasta, com conteúdo diferente. O que deseja fazer?",
+    "openExisting": "Abrir o existente",
+    "asNewVersion": "Enviar como nova versão",
+    "asNewDocument": "Criar documento novo",
+    "sendAnyway": "Enviar mesmo assim"
   },
   "status": {
     "storageOff": "Armazenamento de arquivos não configurado: o envio está indisponível.",
     "offline": "Você está offline. O envio e a edição exigem conexão.",
     "demo": "Ambiente de desenvolvimento"
   },
-  "theme": { "label": "Tema", "system": "Sistema", "light": "Claro", "dark": "Escuro" },
+  "theme": {
+    "label": "Tema",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Escuro"
+  },
   "errors": {
     "UNAUTHENTICATED": "E-mail ou senha inválidos, ou sessão expirada.",
     "FORBIDDEN": "Você não tem permissão para isso.",
@@ -58,6 +77,100 @@
     "RATE_LIMITED": "Muitas tentativas. Tente novamente mais tarde.",
     "CONFLICT": "Operação em conflito (por exemplo, e-mail já cadastrado).",
     "INTERNAL": "Erro interno. Tente novamente.",
-    "NETWORK": "Falha de rede."
+    "NETWORK": "Falha de rede.",
+    "DUPLICATE_FILE": "Já existe um arquivo idêntico neste workspace.",
+    "CONSENT_REQUIRED": "É preciso autorizar o OCR no navegador antes de continuar.",
+    "DOWNLOAD_FAILED": "Não foi possível baixar o arquivo para processá-lo neste navegador.",
+    "OCR_FAILED": "O OCR falhou neste navegador. Tente com um arquivo menor."
+  },
+  "common": {
+    "loading": "Carregando…",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir"
+  },
+  "folders": {
+    "name": "Nome da pasta",
+    "rename": "Renomear",
+    "confirmDelete": "Excluir a pasta “{{name}}”? Ela precisa estar vazia.",
+    "new": "Nova pasta",
+    "create": "Criar pasta",
+    "breadcrumb": "Caminho da pasta"
+  },
+  "search": {
+    "label": "Buscar no texto dos documentos",
+    "button": "Buscar",
+    "clear": "Limpar",
+    "results": "Resultados para “{{q}}”",
+    "none": "Nenhum trecho encontrado. A busca só alcança documentos com texto extraído.",
+    "hasMore": "Há mais resultados; refine a busca.",
+    "likeMode": "Busca simplificada ativa (sem índice de texto): acentos não são ignorados e pode ser mais lenta."
+  },
+  "document": {
+    "back": "Voltar",
+    "updated": "atualizado em {{date}}",
+    "download": "Baixar",
+    "confirmDelete": "Excluir “{{name}}” e todas as suas versões? Esta ação não pode ser desfeita.",
+    "rename": "Nome do documento",
+    "moveTo": "Mover para a pasta"
+  },
+  "extraction": {
+    "title": "Extração de texto",
+    "pages": "{{n}} página(s)",
+    "sections": "{{n}} seção(ões) (o formato não tem páginas)",
+    "chars": "{{n}} caracteres de texto",
+    "byText": "Lido da camada de texto do arquivo, no seu navegador (sem IA). Confira com o original.",
+    "byOcr": "Reconhecido por OCR experimental no navegador. Pode conter erros: confira com o original.",
+    "pending": "O texto ainda não foi extraído.",
+    "failed": "Não foi possível extrair texto legível deste arquivo (ilegível, protegido ou grande demais).",
+    "needsOcr": "Este arquivo não tem texto selecionável (imagem ou PDF digitalizado). É possível tentar OCR no navegador.",
+    "running": "Extraindo…",
+    "run": "Extrair texto",
+    "retry": "Tentar de novo"
+  },
+  "preview": {
+    "title": "Pré-visualização",
+    "tab": {
+      "original": "Original",
+      "text": "Texto extraído"
+    },
+    "noText": "Sem texto extraído para exibir.",
+    "page": "Página {{n}}",
+    "section": "Seção {{n}}",
+    "loadMore": "Carregar mais",
+    "pdfFailed": "Não foi possível carregar a pré-visualização do PDF. Use “Baixar”.",
+    "prev": "Anterior",
+    "next": "Próxima",
+    "pageOf": "Página {{n}} de {{total}}",
+    "docxNote": "Mostra apenas o texto: layout, tabelas e imagens do DOCX não são reproduzidos."
+  },
+  "versions": {
+    "title": "Histórico de versões",
+    "number": "Versão {{n}}",
+    "current": "atual",
+    "makeCurrent": "Tornar atual",
+    "confirmDelete": "Excluir a versão {{n}}?"
+  },
+  "ocr": {
+    "title": "OCR no navegador (experimental)",
+    "explain": "O reconhecimento roda no seu computador; o documento não é enviado a terceiros. O resultado é uma transcrição automática e deve ser conferida.",
+    "limitDesktop": "Disponível somente em computador (desktop).",
+    "limitPages": "No máximo {{n}} páginas por execução.",
+    "limitImage": "Imagens de até {{mb}} MB.",
+    "limitCdn": "O motor de OCR e os dados de idioma são baixados do CDN público jsDelivr; nenhum conteúdo do documento é enviado.",
+    "block": {
+      "mobile": "O OCR no navegador não está disponível em celulares e tablets.",
+      "image_too_large": "Imagem acima de {{mb}} MB: reduza o arquivo para usar o OCR.",
+      "unsupported": "Este tipo de arquivo não usa OCR."
+    },
+    "consent": "Entendo que é experimental e autorizo executar OCR neste navegador.",
+    "start": "Reconhecer texto",
+    "continue": "Continuar a partir da página {{n}}",
+    "running": "Reconhecendo…",
+    "progress": "Página {{page}} ({{done}} de {{total}} concluídas)",
+    "revoke": "Revogar consentimento de OCR",
+    "done": "Texto reconhecido e salvo como transcrição.",
+    "empty": "Nenhum texto foi reconhecido.",
+    "noNewText": "Nenhum texto novo foi reconhecido nessas páginas; o texto já salvo foi mantido."
   }
 }

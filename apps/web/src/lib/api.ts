@@ -3,6 +3,7 @@ export class ApiError extends Error {
     public readonly code: string,
     public readonly status: number,
     message?: string,
+    public readonly details?: Record<string, string | number | boolean>,
   ) {
     super(message ?? code);
   }
@@ -28,7 +29,12 @@ export async function api<T>(
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) {
-    throw new ApiError(data?.error?.code ?? 'INTERNAL', res.status, data?.error?.message);
+    throw new ApiError(
+      data?.error?.code ?? 'INTERNAL',
+      res.status,
+      data?.error?.message,
+      data?.error?.details,
+    );
   }
   return data as T;
 }
@@ -43,12 +49,60 @@ export interface Me {
   user: { id: string; email: string; displayName: string };
   workspaces: WorkspaceSummary[];
 }
+export type DocumentStatus = 'needs_text' | 'extracted' | 'needs_ocr' | 'extraction_failed';
 export interface DocumentRow {
   id: string;
   name: string;
   mime: string;
-  status: 'needs_text' | 'extracted' | 'needs_ocr' | 'extraction_failed';
+  status: DocumentStatus;
+  folderId: string | null;
   createdAt: number;
+  updatedAt: number;
+  sizeBytes: number | null;
+}
+export interface FolderRow {
+  id: string;
+  parentId: string | null;
+  name: string;
+  depth: number;
+}
+export interface VersionRow {
+  id: string;
+  versionNumber: number;
+  sizeBytes: number;
+  mime: string;
+  sha256: string;
+  createdAt: number;
+}
+export interface DocumentDetail {
+  pagesStored: number;
+  lastStoredPage: number;
+  document: {
+    id: string;
+    name: string;
+    mime: string;
+    status: DocumentStatus;
+    folderId: string | null;
+    currentVersionId: string | null;
+    createdAt: number;
+    updatedAt: number;
+  };
+  versions: VersionRow[];
+  metadata: {
+    language: string | null;
+    pageCount: number | null;
+    pageKind: 'page' | 'section';
+    extractedBy: 'client' | 'client_ocr' | null;
+    textCharCount: number | null;
+  } | null;
+}
+export interface SearchHit {
+  documentId: string;
+  documentName: string;
+  folderId: string | null;
+  pageNumber: number;
+  pageKind: 'page' | 'section';
+  snippet: string;
 }
 export interface Health {
   status: string;

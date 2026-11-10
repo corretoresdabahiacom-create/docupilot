@@ -1,13 +1,19 @@
 import clsx from 'clsx';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
 
-export function Button({ className, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function Button({
+  className,
+  danger,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { danger?: boolean }) {
   return (
     <button
       {...props}
       className={clsx(
         'min-h-11 rounded-md px-4 text-sm font-medium transition disabled:opacity-50',
-        'bg-[var(--primary)] text-[var(--primary-text)] hover:opacity-90',
+        danger
+          ? 'bg-[var(--danger)] text-white hover:opacity-90'
+          : 'bg-[var(--primary)] text-[var(--primary-text)] hover:opacity-90',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]',
         className,
       )}

@@ -4,8 +4,11 @@ import { AppError } from './errors';
 import { csrfOrigin } from './middleware/origin';
 import { authRoutes } from './routes/auth';
 import { healthRoutes } from './routes/health';
+import { consentRoutes } from './routes/consents';
+import { documentRoutes } from './routes/documents';
+import { folderRoutes } from './routes/folders';
+import { searchRoutes } from './routes/search';
 import { uploadRoutes } from './routes/uploads';
-import { workspaceRoutes } from './routes/workspaces';
 import type { AppDeps, AppVariables } from './types';
 
 export function createApp(deps: AppDeps) {
@@ -25,15 +28,27 @@ export function createApp(deps: AppDeps) {
 
   app.route('/', healthRoutes);
   app.route('/auth', authRoutes);
-  app.route('/workspaces', workspaceRoutes);
   app.route('/workspaces', uploadRoutes);
+  app.route('/workspaces', folderRoutes);
+  app.route('/workspaces', documentRoutes);
+  app.route('/workspaces', searchRoutes);
+  app.route('/me/consents', consentRoutes);
 
   app.notFound((c) =>
     c.json({ error: { code: 'NOT_FOUND', message: 'Recurso não encontrado.' } }, 404),
   );
   app.onError((err, c) => {
     if (err instanceof AppError) {
-      return c.json({ error: { code: err.code, message: err.message } }, err.status as 400);
+      return c.json(
+        {
+          error: {
+            code: err.code,
+            message: err.message,
+            ...(err.details ? { details: err.details } : {}),
+          },
+        },
+        err.status as 400,
+      );
     }
     // Não registra corpo nem cabeçalhos: apenas o tipo do erro.
     console.error('unhandled', err instanceof Error ? err.name : 'unknown');

@@ -28,6 +28,9 @@ export class MemoryStorage implements StorageProvider {
   async delete(key: string) {
     this.objects.delete(key);
   }
+  async deleteMany(keys: string[]) {
+    for (const k of keys) this.objects.delete(k);
+  }
   /** Simula o PUT do cliente. */
   put(key: string, bytes: Uint8Array) {
     this.objects.set(key, bytes);
