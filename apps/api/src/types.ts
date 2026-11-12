@@ -13,6 +13,11 @@ export interface Env {
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
   R2_BUCKET_NAME?: string;
+  SUPABASE_S3_ENDPOINT?: string;
+  SUPABASE_S3_REGION?: string;
+  SUPABASE_S3_ACCESS_KEY_ID?: string;
+  SUPABASE_S3_SECRET_ACCESS_KEY?: string;
+  SUPABASE_S3_BUCKET?: string;
   TURNSTILE_SECRET?: string;
   ENVIRONMENT?: string;
   ALLOWED_ORIGINS?: string;

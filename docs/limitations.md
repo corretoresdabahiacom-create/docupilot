@@ -8,7 +8,7 @@
 - **Busca**: FTS5 ignora acentos; a alternativa em LIKE não. Só pesquisa a versão atual e documentos com texto extraído.
 - **Versões**: metadados de extração são por documento, não por versão.
 - **Objetos órfãos** podem sobrar se a limpeza no armazenamento falhar; não há faxina automática ainda.
-- **Armazenamento**: exige que você ative o R2 (ou o plano B) e configure o CORS; sem isso o envio fica desabilitado.
+- **Armazenamento**: exige que você ative o R2 ou o plano B (Supabase Storage, implementado mas **não testado contra um projeto real**; ver `docs/env-vars.md`) e configure o CORS; sem isso o envio fica desabilitado. No plano gratuito do Supabase o espaço é 1 GB no total, somando todos os workspaces.
 - **Preview de PDF** exige CORS de GET e baixa o arquivo inteiro (até 25 MB) no navegador.
 - **PWA**: os pacotes de PDF/DOCX/OCR entram no pré-cache do service worker, aumentando o primeiro carregamento.
 - **Lighthouse** não foi executado. O teste de fumaça em Chromium (`apps/web/e2e/smoke.mjs`) usa a API em Node com armazenamento em memória, não o Worker.
