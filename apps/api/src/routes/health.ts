@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { isPiiKeyValid } from '../crypto/pii';
 import { featureFlags } from '../db/schema';
 import type { AppVariables } from '../types';
 
@@ -12,6 +13,7 @@ healthRoutes.get('/health', async (c) => {
     status: 'ok',
     storage: { configured: storage !== null, provider: storage?.name ?? null },
     turnstile: { configured: Boolean(config.turnstileSecret) },
+    pii: { configured: isPiiKeyValid(config.piiKey) },
     flags: Object.fromEntries(flags.map((f) => [f.key, f.enabled])),
   });
 });

@@ -108,6 +108,7 @@ export interface Health {
   status: string;
   storage: { configured: boolean; provider: string | null };
   turnstile: { configured: boolean };
+  pii: { configured: boolean };
   flags: Record<string, boolean>;
 }
 
@@ -154,4 +155,17 @@ export interface AnalysisResponse {
     similar: Array<{ documentId: string; name: string; distance: number }>;
     similarThreshold: number;
   };
+}
+
+export interface ProfileMeta {
+  id: string;
+  label: string;
+  createdAt: number;
+  updatedAt: number;
+}
+export interface ProfileData {
+  id: string;
+  label: string;
+  fields: Partial<Record<string, string>>;
+  updatedAt: number;
 }

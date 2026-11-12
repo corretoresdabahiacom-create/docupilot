@@ -15,8 +15,6 @@ const DOC = join(import.meta.dirname, '..', '..', '..', '..', 'docs', 'heuristic
 
 /** Documentados e ainda não implementados. A lista só pode encolher. */
 const PLANNED = new Set([
-  'acroform_field', // Fase 5
-  'acroform_type_mapping', // Fase 5
   'cnh_number', // Fase 3 (não entregue)
   'contract_party', // fora do escopo da Fase 4 do briefing (não entregue)
   'deadline_expression', // idem
@@ -95,6 +93,8 @@ describe('heuristics.md ↔ código', () => {
 
   it('todo padrão que extrai campos está em FIELD_PATTERNS', () => {
     const nonField = new Set([
+      'acroform_field',
+      'acroform_type_mapping',
       'clause_boundary',
       'diff_clause',
       'diff_fields',

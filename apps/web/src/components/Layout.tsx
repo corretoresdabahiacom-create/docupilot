@@ -75,6 +75,14 @@ export function Layout({ children, signedIn }: { children: ReactNode; signedIn: 
             ))}
           </select>
           {signedIn && (
+            <Link
+              to="/profiles"
+              className="inline-flex min-h-11 items-center px-2 text-sm underline"
+            >
+              {t('nav.profiles')}
+            </Link>
+          )}
+          {signedIn && (
             <Button type="button" onClick={logout}>
               {t('nav.logout')}
             </Button>

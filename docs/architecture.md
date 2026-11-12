@@ -45,9 +45,16 @@ Navegador (React PWA)
 2. O navegador lê o texto armazenado de cada versão (`GET .../documents/:id/pages?versionId=`, 10 páginas por requisição) e roda `compare()` de `@docupilot/shared`: diff de linhas (`diff_textual`), diff de campos (`diff_fields`) e diff de cláusulas (`diff_clause` sobre `clause_boundary`).
 3. A tela mostra texto, campos e cláusulas com página e trecho de origem dos dois lados e exporta a tabela em CSV, JSON ou MD. Nada é enviado nem gravado no servidor (D13).
 
+## Preenchimento de formulário e perfis (Fase 5)
+
+1. Em `/documents/:id/fill` o navegador baixa o PDF, lê os campos com `pdf-lib` (`readFormFields`) e os descreve com `acroform_field`. PDF criptografado, ilegível, sem campos ou XFA recebem aviso próprio.
+2. A pessoa escolhe um perfil (`GET /api/me/profiles/:id`, decifra e audita) e/ou documentos de referência (`GET .../analysis`). `proposeFill` liga cada campo a um dado (`acroform_type_mapping`) e devolve estados; nada é escrito.
+3. A pessoa confirma, escolhe candidato ou digita. `fillPdf` grava só os `confirmado` e baixa `<nome>-preenchido.pdf`; a tela lista o que ficou em branco ou falhou (D14).
+4. `/profiles` gerencia perfis (`/api/me/profiles`, AES-GCM) e o consentimento `pii_profile`.
+
 ## Estados reais (R4)
 
-`GET /api/health` informa se o armazenamento e o Turnstile estão configurados e o valor das feature flags. A interface desabilita o envio e mostra o motivo quando o armazenamento não está configurado. Em produção, sem segredo do Turnstile, cadastro/login/upload respondem `SERVICE_NOT_CONFIGURED`.
+`GET /api/health` informa se o armazenamento, o Turnstile e a chave dos perfis (`pii`) estão configurados e o valor das feature flags. A interface desabilita o envio e mostra o motivo quando o armazenamento não está configurado. Em produção, sem segredo do Turnstile, cadastro/login/upload respondem `SERVICE_NOT_CONFIGURED`.
 
 ## Monetização
 

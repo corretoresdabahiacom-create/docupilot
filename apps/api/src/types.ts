@@ -17,6 +17,7 @@ export interface Env {
   ENVIRONMENT?: string;
   ALLOWED_ORIGINS?: string;
   PBKDF2_ITERATIONS?: string;
+  PII_ENCRYPTION_KEY?: string;
 }
 
 /** Configuração efetiva usada pelo app (separada de Env para facilitar testes). */
@@ -24,6 +25,8 @@ export interface AppConfig {
   environment: 'development' | 'production' | 'test';
   allowedOrigins: string[];
   turnstileSecret?: string;
+  /** Chave AES-GCM (base64, 32 bytes) dos perfis de dados pessoais. Ausente = recurso desligado. */
+  piiKey?: string;
   pbkdf2Iterations: number;
   fetchImpl?: typeof fetch;
 }

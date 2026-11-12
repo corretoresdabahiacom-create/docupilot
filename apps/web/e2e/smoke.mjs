@@ -9,11 +9,13 @@
  *      node apps/web/e2e/smoke.mjs
  */
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
+// pdf-lib é dependência de apps/web; o script roda de qualquer pasta.
+const { PDFDocument } = createRequire(new URL('../package.json', import.meta.url))('pdf-lib');
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8799';
 const OUT = process.env.OUT_DIR ?? '/tmp/claude-0/e2e-out';
@@ -61,6 +63,23 @@ writeFileSync(
   makePdf(['Contrato de locacao revisado com novo prazo de vigencia']),
 );
 writeFileSync(files.escaneado, makePdf(['', '']));
+
+// Formulário com campos (AcroForm) criado com pdf-lib.
+files.ficha = join(OUT, 'ficha.pdf');
+{
+  const doc = await PDFDocument.create();
+  const pg = doc.addPage([400, 400]);
+  const form = doc.getForm();
+  [
+    ['CPF', 360],
+    ['Nome Completo', 330],
+    ['Observações', 300],
+    ['Cônjuge.CPF', 270],
+  ].forEach(([name, y]) =>
+    form.createTextField(name).addToPage(pg, { x: 20, y, width: 220, height: 20 }),
+  );
+  writeFileSync(files.ficha, await doc.save());
+}
 
 const results = [];
 const check = (name, ok, detail = '') => {
@@ -267,6 +286,78 @@ try {
   await page.goto(`${BASE}/?q=vigencia`);
   await page.getByText('Nenhum trecho encontrado').waitFor();
   check('após excluir o documento, o texto some da busca', true);
+
+  // 9b. Fase 5: perfil de dados pessoais + preenchimento assistido de formulário
+  await page.goto(BASE);
+  await page.getByRole('link', { name: 'Perfis de dados' }).click();
+  await page.getByRole('heading', { name: 'Perfis de dados pessoais' }).waitFor();
+  check(
+    'novo perfil fica bloqueado até o consentimento',
+    await page.getByRole('button', { name: 'Novo perfil' }).isDisabled(),
+  );
+  await page.getByRole('button', { name: 'Autorizar' }).click();
+  await page.getByText('Consentimento ativo.').waitFor();
+  await page.getByRole('button', { name: 'Novo perfil' }).click();
+  await page.getByLabel('Nome do perfil').fill('Pessoal');
+  await page.getByLabel('CPF', { exact: true }).fill('111.444.777-36');
+  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  check(
+    'CPF inválido é recusado no perfil',
+    await page.getByText(/Valor inválido: CPF/).isVisible(),
+  );
+  await page.getByLabel('CPF', { exact: true }).fill('111.444.777-35');
+  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await page.getByText('Perfil salvo.').waitFor();
+  check('perfil salvo (criptografado no servidor)', true);
+
+  await page.goto(BASE);
+  await upload(files.ficha);
+  await page.getByText('Arquivo enviado e validado.').waitFor({ timeout: 30000 });
+  await page.getByRole('link', { name: 'ficha.pdf' }).first().click();
+  await page.getByRole('link', { name: 'Preencher formulário' }).click();
+  await page.getByText('Fontes dos dados').waitFor({ timeout: 30000 });
+  check(
+    'aviso de preenchimento assistido visível',
+    await page
+      .getByText(/nada é escrito no PDF sem a sua confirmação/)
+      .first()
+      .isVisible(),
+  );
+  await page.getByLabel('Perfil de dados pessoais').selectOption({ label: 'Pessoal' });
+  await page.getByRole('button', { name: 'Usar este perfil' }).click();
+  await page.getByText(/Perfil “Pessoal” carregado/).waitFor();
+  await page.getByRole('button', { name: 'Montar proposta' }).click();
+  await page.getByText('Sugerido (perfil)').waitFor();
+  check(
+    'nada é gerado antes de confirmar',
+    await page.getByRole('button', { name: 'Gerar PDF preenchido' }).isDisabled(),
+  );
+  check(
+    'campo do cônjuge não é preenchido',
+    await page.getByText(/sugere outra pessoa/).isVisible(),
+  );
+  await page.getByRole('button', { name: /Confirmar todos os sugeridos/ }).click();
+  await page.screenshot({ path: join(OUT, '06-preenchimento.png') });
+  const [filled] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Gerar PDF preenchido' }).click(),
+  ]);
+  const filledPath = join(OUT, 'ficha-saida.pdf');
+  await filled.saveAs(filledPath);
+  check('baixa o PDF preenchido', filled.suggestedFilename() === 'ficha-preenchido.pdf');
+  const out = await PDFDocument.load(readFileSync(filledPath));
+  const outForm = out.getForm();
+  check(
+    'CPF confirmado foi gravado no PDF',
+    outForm.getTextField('CPF').getText() === '111.444.777-35',
+  );
+  check(
+    'campo ausente e campo do cônjuge ficaram vazios',
+    !outForm.getTextField('Observações').getText() &&
+      !outForm.getTextField('Cônjuge.CPF').getText(),
+  );
+  await page.getByText(/Ficaram em branco:/).waitFor();
+  check('lista os campos que ficaram em branco', true);
 
   // 10. layout de celular
   await page.setViewportSize({ width: 390, height: 800 });

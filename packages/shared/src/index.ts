@@ -4,3 +4,4 @@ export * from './files';
 export * from './schemas';
 export * from './text';
 export * from './extraction';
+export * from './forms';

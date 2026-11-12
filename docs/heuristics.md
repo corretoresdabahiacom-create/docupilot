@@ -395,17 +395,30 @@ análise jurídica; "quais são as obrigações?" exige IA externa e fica indisp
 
 ### 10.1 acroform_field
 
-| Campo        | Valor                                                                                                                                                                         |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pattern_id` | `acroform_field`                                                                                                                                                              |
-| Estado       | **planejado (Fase 5)**. Na Fase 3, a regra `empty_required_acroform` lê os widgets via pdf.js no navegador (nome, obrigatório, preenchido), sem gravá-los como campo extraído |
+| Campo         | Valor                                                                                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pattern_id`  | `acroform_field`                                                                                                                                                                                                                      |
+| Onde roda     | navegador (`pdf-lib` lê os widgets); a descrição dos campos é código puro em `packages/shared`                                                                                                                                        |
+| O que faz     | descreve cada widget: nome completo, folha e pais (sem índices `[0]`, sem acento, minúsculo), tipo (`text`, `checkbox`, `choice`, `unsupported`), opções, `maxLength`, multilinha, obrigatório e se já tem valor                      |
+| Não suportado | assinatura, botão, tipo desconhecido e campo somente leitura viram `unsupported` (`signature`, `button`, `unknown`, `read_only`): nunca são preenchidos                                                                               |
+| Limite        | 500 campos por PDF (`MAX_FORM_FIELDS`)                                                                                                                                                                                                |
+| source_kind   | deterministic (leitura estrutural, sem interpretação)                                                                                                                                                                                 |
+| Limitações    | só AcroForm; XFA, PDF escaneado sem campos e PDF criptografado não têm campos preenchíveis e a tela avisa. O `.` separa a hierarquia do PDF: um rótulo com ponto final ("Data nasc.") vira dois segmentos, é como o PDF define o nome |
+| Testes        | `acroform_field.test.ts`                                                                                                                                                                                                              |
 
 ### 10.2 acroform_type_mapping
 
-| Campo        | Valor                   |
-| ------------ | ----------------------- |
-| `pattern_id` | `acroform_type_mapping` |
-| Estado       | **planejado (Fase 5)**  |
+| Campo        | Valor                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pattern_id` | `acroform_type_mapping`                                                                                                                                                                                                                                                                                                                   |
+| O que faz    | liga o **nome** do campo a um dado conhecido (`full_name`, `cpf`, `cnpj`, `rg`, `cnh`, `passport`, `birth_date`, `mother_name`, `nationality`, `email`, `phone`, `cep`, `address`, `address_number`, `address_complement`, `neighborhood`, `city`, `state`) e valida/formata o valor para o campo                                         |
+| Ligação      | 1) **tabela de equivalência** (`EQUIVALENCE`, nome exato do campo) → "mapeado"; 2) **regex de nome** (`cpf`, `cnpj`, `rg`, `cnh`, nascimento, e-mail, `cep`, telefone) → só "sugerido", exige confirmação; 3) nada → "ausente"                                                                                                            |
+| Outra pessoa | se o nome (campo ou pais) cita cônjuge, responsável, representante, testemunha, fiador, pai, mãe, filho, contato, emergência, etc., o campo **não é ligado** e nunca recebe dado do usuário. Exceção: `mother_name`. A lista é conservadora de propósito: "E-mail para contato" é bloqueado (pode ser de terceiro)                        |
+| Valores      | forma canônica: CPF/CNPJ (com dígito verificador), CEP, telefone só dígitos; data ISO (de 1900 até hoje); e-mail minúsculo; UF maiúscula. `formatForField` escolhe máscara pelo `maxLength`. Lista: só aceita opção existente (sem acento/caixa) e grava a opção exata. Texto: recusa vazio, tamanho excedido e caractere fora do WinAnsi |
+| Estados      | `mapeado_automaticamente` (tabela + perfil), `preenchido_por_regex` (tabela + só documento), `aguardando_confirmacao` (nome por regex ou mais de um valor distinto), `campo_ausente`, `campo_invalido`, `confirmado`. **Só `confirmado` é escrito no PDF**                                                                                |
+| source_kind  | heuristic (a ligação por nome é uma heurística)                                                                                                                                                                                                                                                                                           |
+| Precisão     | **não medida.** Estimativa de projeto: a tabela acerta nomes comuns de formulários brasileiros; formulários com nomes opacos ("Campo 17") caem em "ausente". Por isso nada vai ao PDF sem confirmação                                                                                                                                     |
+| Testes       | `acroform_type_mapping.test.ts` (≥5 casos que ligam e ≥5 que não ligam), `forms/fill.test.ts`                                                                                                                                                                                                                                             |
 
 ## 11. Idioma
 

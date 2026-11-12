@@ -10,7 +10,10 @@ import type { AppVariables, Db } from '../types';
 export const consentRoutes = new Hono<{ Variables: AppVariables }>();
 consentRoutes.use('*', requireAuth);
 
-const PROVIDERS: Record<string, string> = { browser_ocr: 'tesseract.js (navegador)' };
+const PROVIDERS: Record<string, string> = {
+  browser_ocr: 'tesseract.js (navegador)',
+  pii_profile: 'DocuPilot (D1, criptografado)',
+};
 
 export async function hasActiveConsent(db: Db, userId: string, purpose: string): Promise<boolean> {
   const rows = await db

@@ -42,7 +42,13 @@ const storage = new HttpMemoryStorage();
 const app = createApp({
   db,
   storage,
-  config: { environment: 'development', allowedOrigins: [ORIGIN], pbkdf2Iterations: 1000 },
+  config: {
+    environment: 'development',
+    allowedOrigins: [ORIGIN],
+    pbkdf2Iterations: 1000,
+    // Chave só deste teste (não é segredo de produção).
+    piiKey: Buffer.alloc(32, 7).toString('base64'),
+  },
 });
 
 const MIME: Record<string, string> = {

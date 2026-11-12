@@ -14,6 +14,7 @@ function buildConfig(env: Env): AppConfig {
       .map((s) => s.trim())
       .filter(Boolean),
     turnstileSecret: env.TURNSTILE_SECRET,
+    piiKey: env.PII_ENCRYPTION_KEY,
     pbkdf2Iterations: Number.isFinite(iterations) && iterations > 0 ? iterations : MAX_ITERATIONS,
   };
 }

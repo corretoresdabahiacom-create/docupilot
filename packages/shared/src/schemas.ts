@@ -156,7 +156,7 @@ export const analysisSchema = z.object({
 });
 export type AnalysisInput = z.infer<typeof analysisSchema>;
 
-export const CONSENT_PURPOSES = ['browser_ocr'] as const;
+export const CONSENT_PURPOSES = ['browser_ocr', 'pii_profile'] as const;
 export const consentSchema = z.object({ purpose: z.enum(CONSENT_PURPOSES) });
 
 export const uploadCompleteSchema = z.object({

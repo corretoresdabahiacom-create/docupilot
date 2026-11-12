@@ -322,6 +322,14 @@ export function DocumentPage() {
               {d.versions.length > 1 ? t('compare.versions') : t('compare.withOther')}
             </Link>
           )}
+          {doc.mime === 'application/pdf' && (
+            <Link
+              to={`/documents/${doc.id}/fill`}
+              className="inline-flex min-h-11 items-center rounded-md border border-[var(--border)] px-4 text-sm font-medium"
+            >
+              {t('fill.link')}
+            </Link>
+          )}
           {canDelete && (
             <Button
               type="button"

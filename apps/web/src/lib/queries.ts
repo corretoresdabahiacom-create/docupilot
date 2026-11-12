@@ -7,6 +7,7 @@ import {
   type FolderRow,
   type Health,
   type Me,
+  type ProfileMeta,
   type SearchHit,
 } from './api';
 
@@ -98,3 +99,31 @@ export function useRevokeOcrConsent() {
 export const canEditRole = (role?: string) =>
   ['owner', 'admin', 'manager', 'editor'].includes(role ?? '');
 export const canDeleteRole = (role?: string) => ['owner', 'admin', 'manager'].includes(role ?? '');
+
+// ---------- perfis de dados pessoais (Fase 5) ----------
+
+export const usePiiConsent = () =>
+  useQuery({
+    queryKey: ['consents'],
+    queryFn: async () => {
+      const res = await api<{ consents: { purpose: string }[] }>('/me/consents');
+      return res.consents.some((c) => c.purpose === 'pii_profile');
+    },
+  });
+
+export function usePiiConsentMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (grant: boolean) =>
+      grant
+        ? api('/me/consents', { method: 'POST', body: { purpose: 'pii_profile' } })
+        : api('/me/consents/pii_profile', { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['consents'] }),
+  });
+}
+
+export const useProfiles = () =>
+  useQuery({
+    queryKey: ['profiles'],
+    queryFn: () => api<{ profiles: ProfileMeta[]; max: number }>('/me/profiles'),
+  });

@@ -1,6 +1,6 @@
-# Limitações atuais (Fase 4)
+# Limitações atuais (Fase 5)
 
-- **Preenchimento de formulários, geração e automação, empresas e administração** ainda não existem (Fases 5 a 8).
+- **Geração de documentos e automação, empresas e administração** ainda não existem (Fases 6 a 8).
 - **Nada foi validado em Cloudflare real** (D1, R2, Workers, CPU de 10 ms, custo de escritas do FTS5). Os testes rodam em libSQL local com armazenamento em memória.
 - **Texto**: DOCX mostra só texto (sem layout, tabelas ou imagens). PDFs com mais de 300 páginas, ou com uma página de mais de 30.000 caracteres, não são extraídos.
 - **PDF com texto ilegível** vira `extraction_failed` e não oferece OCR (decisão do briefing); só `needs_ocr` abre o OCR.
@@ -38,3 +38,14 @@
 - DOCX, TXT, MD e CSV são comparados por **seção** (~6.000 caracteres), não por página; as "páginas" citadas são seções.
 - `contract_party`, `deadline_expression` e `obligation_marker` não foram implementados.
 - O teste de fumaça em Chromium (24 verificações) roda contra a API em Node com armazenamento em memória, **não** contra o Worker real.
+
+## Fase 5 (preenchimento de formulário e perfis)
+
+- **Só AcroForm.** PDFs escaneados, XFA (dinâmicos) e criptografados não são preenchidos (a tela avisa); XFA pode mostrar campos que o leitor de PDF não mostra. Assinatura, botão e campo somente leitura nunca são preenchidos.
+- **Ligação por nome do campo é heurística** e a precisão **não foi medida**. Nomes opacos ("Campo 17") ficam em branco; nomes parecidos pedem confirmação. A lista de "outra pessoa" é conservadora e pode bloquear campos legítimos (digite manualmente).
+- **Dados de documentos de referência** vêm só do que a análise extraiu (CPF, CNPJ, e-mail, telefone, CEP, endereço; data só se rotulada como nascimento). Documento com vários CPFs gera ambiguidade que você resolve. Nome, RG, CNH e passaporte **não** são extraídos de documentos (só do perfil ou digitados).
+- **Caixas de seleção** nunca são marcadas sozinhas; só por ação manual. Texto com caractere fora do WinAnsi (ex.: japonês, emoji) é recusado.
+- **Testado** com PDFs gerados por `pdf-lib` (unidade e Chromium). **Não testado** com formulários reais de órgãos públicos, com fontes embutidas diferentes de Helvetica, nem com campos de formatação JavaScript.
+- **Perfil**: até 10 por usuário; sem rotação de chave; perdeu `PII_ENCRYPTION_KEY`, perdeu os perfis. Nada ainda usa `extracted_fields.personal_profile_id`; só a limpeza na exclusão existe.
+- Sem a chave configurada o recurso fica desligado (503); isso é o estado padrão até você criar o segredo.
+- O teste de fumaça em Chromium (34 verificações) usa a API em Node com armazenamento em memória e uma chave de teste, **não** o Worker real.

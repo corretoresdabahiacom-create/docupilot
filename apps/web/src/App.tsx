@@ -5,6 +5,8 @@ import { AuthPage } from './pages/AuthPage';
 import { ComparePage } from './pages/ComparePage';
 import { DocumentPage } from './pages/DocumentPage';
 import { DocumentsPage } from './pages/DocumentsPage';
+import { FillFormPage } from './pages/FillFormPage';
+import { ProfilesPage } from './pages/ProfilesPage';
 
 export function App() {
   const me = useMe();
@@ -27,6 +29,14 @@ export function App() {
         <Route
           path="/documents/:documentId"
           element={signedIn ? <DocumentPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/documents/:documentId/fill"
+          element={signedIn ? <FillFormPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profiles"
+          element={signedIn ? <ProfilesPage /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/compare"
