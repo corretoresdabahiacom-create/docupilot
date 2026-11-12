@@ -275,5 +275,85 @@
     },
     "similarWarn": "Possibly similar — not an exact copy (SimHash, Hamming distance ≤ {{max}}).",
     "reportedByBrowser": "reported by the browser (not re-checked by the server)"
+  },
+  "compare": {
+    "title": "Compare documents",
+    "intro": "Compares the already extracted text of two versions or two documents in the same workspace. The comparison runs in your browser and nothing is saved.",
+    "notice": "Textual, heuristic comparison: it shows what changed in the text, does not assess validity, effect or legality of clauses, and does not replace review by a person.",
+    "sideA": "A (base)",
+    "sideB": "B (compared)",
+    "document": "Document",
+    "version": "Version",
+    "choose": "Choose a document…",
+    "run": "Compare",
+    "running": "Comparing…",
+    "versions": "Compare versions",
+    "withOther": "Compare with another document",
+    "sameVersion": "A and B are the same version; pick different versions.",
+    "noText": "Side {{side}} has no extracted text. Extract the document's text (or use OCR) and try again.",
+    "result": "Result",
+    "tab": {
+      "text": "Text",
+      "fields": "Fields",
+      "clauses": "Clauses"
+    },
+    "summary": {
+      "text": "Text: {{similarity}}% of lines equal · {{changed}} changed, {{removed}} removed, {{added}} added.",
+      "fields": "Fields: {{changed}} changed, {{onlyA}} only in A, {{onlyB}} only in B, {{same}} equal.",
+      "clauses": "Clauses (heuristic): {{diffs}} difference(s) across {{total}} clause(s) read on both sides."
+    },
+    "truncated": "Long document: only the first {{n}} lines of each side were compared.",
+    "hunk": {
+      "removed": "Removed",
+      "added": "Added",
+      "changed": "Changed",
+      "equal": "Equal"
+    },
+    "removedLine": "line in A",
+    "addedLine": "line in B",
+    "showAll": "Show all {{n}} changes",
+    "absent": "Not found",
+    "moreOccurrences": "+{{n}} occurrence(s) not shown",
+    "field": {
+      "igual": "Equal",
+      "alterado": "Changed",
+      "somente_a": "Only in A",
+      "somente_b": "Only in B"
+    },
+    "fields": {
+      "note": "Fields recalculated in the browser from the stored text, with page and snippet of origin on both sides. They are not saved nor re-checked by the server. “Changed” only appears when both values share the same label.",
+      "showSame": "Also show the {{n}} equal field(s)",
+      "none": "No field matched the patterns on either side.",
+      "noDiff": "No differences among the recognised fields."
+    },
+    "clause": {
+      "igual": "Equal",
+      "alterada": "Changed",
+      "removida": "Removed",
+      "adicionada": "Added",
+      "renumerada_possivel": "Possibly renumbered"
+    },
+    "clauses": {
+      "note": "Clauses detected by numbering at the start of a line (1., 1.1., Art., Clause). Best-effort heuristic; it can be wrong, especially for PDFs without line breaks.",
+      "none": "No numbered clause detected. Use the Text tab.",
+      "duplicates": "Repeated numbering in the same document: {{keys}}. Repeats were paired by order.",
+      "showSame": "Also show the {{n}} equal clause(s)",
+      "noDiff": "No differences among the detected clauses.",
+      "similarity": "{{value}}% words in common",
+      "noInline": "Text too long to highlight words; compare in the Text tab."
+    },
+    "text": {
+      "identical": "The texts are equal (ignoring spaces and line breaks)."
+    },
+    "export": {
+      "title": "Export table:",
+      "section": "section",
+      "item": "item",
+      "status": "status",
+      "valueA": "value A",
+      "originA": "origin A",
+      "valueB": "value B",
+      "originB": "origin B"
+    }
   }
 }

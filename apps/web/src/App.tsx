@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout';
 import { useMe } from './lib/queries';
 import { AuthPage } from './pages/AuthPage';
+import { ComparePage } from './pages/ComparePage';
 import { DocumentPage } from './pages/DocumentPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 
@@ -26,6 +27,10 @@ export function App() {
         <Route
           path="/documents/:documentId"
           element={signedIn ? <DocumentPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/compare"
+          element={signedIn ? <ComparePage /> : <Navigate to="/login" replace />}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

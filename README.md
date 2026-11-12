@@ -2,7 +2,7 @@
 
 Plataforma multi-tenant para organizar, extrair, comparar, preencher e gerar documentos, com rastreabilidade de origem e revisão humana. **Sem IA generativa por padrão**: o que é extração determinística, heurística ou IA é sempre declarado.
 
-> Estado: **Fase 3 (extração estruturada e análise determinística)** concluída, aguardando aprovação; a Fase 2 foi aprovada verbalmente ("aprovo depois"). Siga as fases em ordem; cada uma termina com aprovação.
+> Estado: **Fase 4 (comparação)** concluída, aguardando aprovação. As Fases 2 e 3 seguem com aprovação formal pendente (você disse "aprovo depois"). Siga as fases em ordem; cada uma termina com aprovação.
 
 ## Estrutura
 

@@ -122,7 +122,7 @@ try {
   await page.getByRole('button', { name: 'Cancelar' }).click();
 
   // 5. busca
-  await page.getByLabel('Buscar no texto dos documentos').fill('alugue');
+  await page.getByLabel('Busca por palavra-chave nos documentos').fill('alugue');
   await page.getByRole('button', { name: 'Buscar' }).click();
   await page.getByRole('heading', { name: /Resultados para/ }).waitFor();
   const mark = page.locator('mark').first();
@@ -147,8 +147,16 @@ try {
   check('preview do PDF renderiza a página citada (canvas com conteúdo)', canvasOk);
   await page.screenshot({ path: join(OUT, '03-preview.png') });
   await page.getByRole('tab', { name: 'Texto extraído' }).click();
-  await page.getByText('aluguel mensal').waitFor();
+  // escopo no cartão de pré-visualização: o cartão de análise também cita trechos do documento
+  await page
+    .locator('section', { has: page.getByRole('heading', { name: 'Pré-visualização' }) })
+    .getByText('aluguel mensal')
+    .waitFor();
   check('aba de texto extraído exibe o conteúdo', true);
+  check(
+    'cartão de análise estruturada aparece no documento extraído',
+    await page.getByRole('heading', { name: 'Análise estruturada' }).isVisible(),
+  );
 
   // 7. mesmo nome, conteúdo diferente → nova versão
   await page.goto(BASE);
@@ -174,6 +182,40 @@ try {
     'nova versão cria histórico (v2 atual, v1 preservada)',
     await page.getByText('atual', { exact: true }).isVisible(),
   );
+  // 7b. comparação v1 × v2 (no navegador, sem gravar nada)
+  await page.getByRole('link', { name: 'Comparar versões' }).click();
+  await page.getByRole('heading', { name: 'Comparar documentos' }).waitFor();
+  check(
+    'aviso de que a comparação não é parecer jurídico',
+    await page
+      .getByText(/não avalia validade, efeito ou legalidade/)
+      .first()
+      .isVisible(),
+  );
+  await page.getByRole('button', { name: 'Comparar', exact: true }).click();
+  await page.getByText(/linhas iguais/).waitFor({ timeout: 20000 });
+  const hunkLabels = await page
+    .locator('li span:has-text("Removido"), li span:has-text("Alterado")')
+    .count();
+  check('comparação de versões mostra o que mudou no texto', hunkLabels > 0);
+  await page.getByRole('tab', { name: 'Campos' }).click();
+  check(
+    'aba de campos explica que não são gravados nem reconferidos',
+    await page.getByText(/não são gravados nem reconferidos/i).isVisible(),
+  );
+  await page.getByRole('tab', { name: 'Cláusulas' }).click();
+  check(
+    'aba de cláusulas declara que é heurística',
+    await page.getByText(/heurística de melhor esforço/).isVisible(),
+  );
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'CSV', exact: true }).click(),
+  ]);
+  check('exporta a tabela comparativa em CSV', download.suggestedFilename().endsWith('.csv'));
+  await page.screenshot({ path: join(OUT, '03b-comparacao.png') });
+  await page.goBack();
+
   // busca só enxerga a versão atual
   await page.goto(`${BASE}/?q=vigencia`);
   await page.getByRole('heading', { name: /Resultados para/ }).waitFor();

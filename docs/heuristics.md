@@ -312,16 +312,23 @@ Normalização: `"<valor com ponto decimal> <moeda>"`, p.ex. `1234.56 BRL`. Sepa
 
 ## 6. Elementos contratuais
 
-Estes quatro padrões pertencem à Fase 4 e **não estão implementados**. Nenhum deles é análise
-jurídica; "quais são as obrigações?" exige IA externa e fica indisponível por padrão.
+`clause_boundary` foi entregue na Fase 4 (abaixo). `contract_party`, `deadline_expression` e
+`obligation_marker` **não estão implementados** (não fazem parte da Fase 4 do briefing). Nenhum deles é
+análise jurídica; "quais são as obrigações?" exige IA externa e fica indisponível por padrão.
 
 | Campo        | Valor            |
 | ------------ | ---------------- |
 | `pattern_id` | `contract_party` |
 
-| Campo        | Valor             |
-| ------------ | ----------------- |
-| `pattern_id` | `clause_boundary` |
+| Campo             | Valor                                                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pattern_id`      | `clause_boundary`                                                                                                                                                              |
+| Estado            | implementado na Fase 4 (`patterns/clause_boundary.ts`); **best effort, heurística**                                                                                            |
+| Algoritmo         | uma cláusula começa em linha que inicia com `1.`, `1.1.`/`1.1`, `Art. 5º`/`Artigo 5`, `Cláusula 3ª` ou `Cláusula Primeira` (ordinais por extenso); vai até o próximo cabeçalho |
+| Limites           | até 2 dígitos por nível (`1.000` e `10.05.2024` não contam); um nível exige ponto (`1.`); chave repetida vira `1#2`                                                            |
+| source_kind       | heuristic                                                                                                                                                                      |
+| Precisão esperada | não medida. Falha quando o PDF não preserva quebras de linha, ou quando uma linha de texto comum começa com número (`2.5 mil`)                                                 |
+| Resultado         | "cláusula" = trecho de texto sob um cabeçalho numerado; **não** é juízo sobre validade jurídica                                                                                |
 
 | Campo        | Valor                 |
 | ------------ | --------------------- |
@@ -427,19 +434,42 @@ jurídica; "quais são as obrigações?" exige IA externa e fica indisponível p
 
 ## 13. Comparação (Fase 4)
 
-| Campo        | Valor          |
-| ------------ | -------------- |
-| `pattern_id` | `diff_textual` |
+Tudo roda no navegador sobre o texto já armazenado e **compara o que está escrito**; não diz se uma mudança é relevante, válida ou legal. Resultados não são gravados.
 
-| Campo        | Valor         |
-| ------------ | ------------- |
-| `pattern_id` | `diff_fields` |
+### 13.1 diff_textual
 
-| Campo        | Valor         |
-| ------------ | ------------- |
-| `pattern_id` | `diff_clause` |
+| Campo        | Valor                                                                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pattern_id` | `diff_textual`                                                                                                                                                                                                |
+| Algoritmo    | texto vira linhas (linhas > 300 caracteres viram frases); `diffArrays` (biblioteca `diff`, Myers) compara as linhas ignorando só espaços; blocos substituídos são alinhados e cada par ganha diff de palavras |
+| Alinhamento  | bloco de mesmo tamanho: pares por posição; tamanhos diferentes: alinhamento monótono por similaridade de palavras (Jaccard ≥ 0,3), pulado acima de 250.000 pares                                              |
+| Limites      | 3.000 linhas por lado (o excedente é cortado e avisado)                                                                                                                                                       |
+| source_kind  | deterministic (o diff) · o pareamento de linhas alteradas é heurístico                                                                                                                                        |
+| Similaridade | linhas iguais ÷ maior número de linhas; é uma proporção de linhas, não de significado                                                                                                                         |
 
-Não implementados.
+### 13.2 diff_fields
+
+| Campo        | Valor                                                                                                                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pattern_id` | `diff_fields`                                                                                                                                                                                       |
+| Algoritmo    | roda os padrões da Fase 3 nos dois textos; agrupa por (tipo, rótulo); valores nos dois lados = `igual`; um valor só em A e um só em B **com rótulo** = `alterado`; demais = `somente_a`/`somente_b` |
+| Origem       | até 3 ocorrências por lado, com página e trecho                                                                                                                                                     |
+| Limites      | 400 ocorrências por lado                                                                                                                                                                            |
+| Limitação    | sem rótulo não se afirma "alterado". Rótulo diferente entre versões aparece como removido + adicionado                                                                                              |
+| Confiança    | herdada de cada padrão; os campos **não** são reconferidos pelo servidor (calculados do texto armazenado)                                                                                           |
+
+### 13.3 diff_clause
+
+| Campo        | Valor                                                                                                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pattern_id` | `diff_clause`                                                                                                                                                              |
+| Algoritmo    | pareia cláusulas pela chave de `clause_boundary`; texto igual = `igual`, diferente = `alterada` (diff de palavras até 20.000 caracteres); sem par: `removida`/`adicionada` |
+| Renumeração  | cláusulas sem par com corpo de similaridade de palavras (Jaccard) ≥ 0,8 viram `renumerada_possivel`, marcada **exige revisão humana**                                      |
+| Limitação    | depende da heurística de `clause_boundary`; cláusula movida e renumerada com texto reescrito aparece como removida + adicionada                                            |
+
+### 13.4 Exportação
+
+CSV (BOM UTF-8, CRLF, células iniciadas por `= + - @` recebem apóstrofo contra injeção de fórmula), JSON completo (sem as partes iguais do texto) e Markdown (caracteres de marcação escapados). Todos levam o aviso de que é comparação textual heurística, sem parecer jurídico.
 
 ## 14. Resumo extrativo
 

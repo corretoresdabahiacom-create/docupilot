@@ -17,15 +17,11 @@ const DOC = join(import.meta.dirname, '..', '..', '..', '..', 'docs', 'heuristic
 const PLANNED = new Set([
   'acroform_field', // Fase 5
   'acroform_type_mapping', // Fase 5
-  'clause_boundary', // Fase 4
   'cnh_number', // Fase 3 (não entregue)
-  'contract_party', // Fase 4
-  'deadline_expression', // Fase 4
-  'diff_clause', // Fase 4
-  'diff_fields', // Fase 4
-  'diff_textual', // Fase 4
+  'contract_party', // fora do escopo da Fase 4 do briefing (não entregue)
+  'deadline_expression', // idem
   'keywords_yake', // Fase 3 (não entregue)
-  'obligation_marker', // Fase 4
+  'obligation_marker', // idem
   'passport_br', // Fase 3 (não entregue)
   'rg_flexible', // Fase 3 (não entregue)
   'table_heuristic', // Fase 3 (não entregue)
@@ -99,6 +95,10 @@ describe('heuristics.md ↔ código', () => {
 
   it('todo padrão que extrai campos está em FIELD_PATTERNS', () => {
     const nonField = new Set([
+      'clause_boundary',
+      'diff_clause',
+      'diff_fields',
+      'diff_textual',
       'dedup_exact',
       'dedup_failed',
       'dedup_simhash',

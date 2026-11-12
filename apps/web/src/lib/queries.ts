@@ -32,6 +32,15 @@ export const useDocuments = (workspaceId: string | undefined, folderId: string |
     enabled: Boolean(workspaceId),
   });
 
+/** Todos os documentos do workspace (até 200), para escolher o que comparar. */
+export const useAllDocuments = (workspaceId: string | undefined) =>
+  useQuery({
+    queryKey: ['documents', workspaceId, 'all'],
+    queryFn: () =>
+      api<{ documents: DocumentRow[] }>(`/workspaces/${workspaceId}/documents?folderId=all`),
+    enabled: Boolean(workspaceId),
+  });
+
 export const useDocument = (workspaceId: string | undefined, documentId: string | undefined) =>
   useQuery({
     queryKey: ['document', workspaceId, documentId],

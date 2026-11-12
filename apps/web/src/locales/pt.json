@@ -275,5 +275,85 @@
     },
     "similarWarn": "Possivelmente similar — não é cópia exata (SimHash, distância de Hamming ≤ {{max}}).",
     "reportedByBrowser": "informado pelo navegador (não reconferido pelo servidor)"
+  },
+  "compare": {
+    "title": "Comparar documentos",
+    "intro": "Compara o texto já extraído de duas versões ou de dois documentos do mesmo workspace. A comparação roda no seu navegador e nada é gravado.",
+    "notice": "Comparação textual e heurística: mostra o que mudou no texto, não avalia validade, efeito ou legalidade de cláusulas e não substitui a revisão por uma pessoa.",
+    "sideA": "A (base)",
+    "sideB": "B (comparado)",
+    "document": "Documento",
+    "version": "Versão",
+    "choose": "Escolher documento…",
+    "run": "Comparar",
+    "running": "Comparando…",
+    "versions": "Comparar versões",
+    "withOther": "Comparar com outro documento",
+    "sameVersion": "A e B são a mesma versão; escolha versões diferentes.",
+    "noText": "O lado {{side}} não tem texto extraído. Extraia o texto do documento (ou use OCR) e tente de novo.",
+    "result": "Resultado",
+    "tab": {
+      "text": "Texto",
+      "fields": "Campos",
+      "clauses": "Cláusulas"
+    },
+    "summary": {
+      "text": "Texto: {{similarity}}% das linhas iguais · {{changed}} alterada(s), {{removed}} removida(s), {{added}} adicionada(s).",
+      "fields": "Campos: {{changed}} alterado(s), {{onlyA}} só em A, {{onlyB}} só em B, {{same}} igual(is).",
+      "clauses": "Cláusulas (heurística): {{diffs}} diferença(s) em {{total}} cláusula(s) lidas nos dois lados."
+    },
+    "truncated": "Documento longo: só as primeiras {{n}} linhas de cada lado foram comparadas.",
+    "hunk": {
+      "removed": "Removido",
+      "added": "Adicionado",
+      "changed": "Alterado",
+      "equal": "Igual"
+    },
+    "removedLine": "linha em A",
+    "addedLine": "linha em B",
+    "showAll": "Mostrar todas as {{n}} mudanças",
+    "absent": "Não encontrado",
+    "moreOccurrences": "+{{n}} ocorrência(s) não mostrada(s)",
+    "field": {
+      "igual": "Igual",
+      "alterado": "Alterado",
+      "somente_a": "Só em A",
+      "somente_b": "Só em B"
+    },
+    "fields": {
+      "note": "Campos recalculados no navegador a partir do texto armazenado, com página e trecho de origem dos dois lados. Não são gravados nem reconferidos pelo servidor. “Alterado” só aparece quando os dois valores têm o mesmo rótulo.",
+      "showSame": "Mostrar também os {{n}} campo(s) iguais",
+      "none": "Nenhum campo reconhecido pelos padrões em nenhum dos lados.",
+      "noDiff": "Nenhuma diferença entre os campos reconhecidos."
+    },
+    "clause": {
+      "igual": "Igual",
+      "alterada": "Alterada",
+      "removida": "Removida",
+      "adicionada": "Adicionada",
+      "renumerada_possivel": "Possível renumeração"
+    },
+    "clauses": {
+      "note": "Cláusulas detectadas por numeração no início da linha (1., 1.1., Art., Cláusula). É uma heurística de melhor esforço; pode errar, principalmente em PDFs sem quebras de linha.",
+      "none": "Nenhuma cláusula numerada detectada. Use a aba Texto.",
+      "duplicates": "Numeração repetida no mesmo documento: {{keys}}. Os repetidos foram pareados pela ordem.",
+      "showSame": "Mostrar também as {{n}} cláusula(s) iguais",
+      "noDiff": "Nenhuma diferença entre as cláusulas detectadas.",
+      "similarity": "{{value}}% de palavras em comum",
+      "noInline": "Texto longo demais para destacar as palavras; compare na aba Texto."
+    },
+    "text": {
+      "identical": "Os textos são iguais (ignorando espaços e quebras de linha)."
+    },
+    "export": {
+      "title": "Exportar tabela:",
+      "section": "seção",
+      "item": "item",
+      "status": "situação",
+      "valueA": "valor A",
+      "originA": "origem A",
+      "valueB": "valor B",
+      "originB": "origem B"
+    }
   }
 }

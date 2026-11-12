@@ -1,6 +1,6 @@
-# Limitações atuais (Fase 3)
+# Limitações atuais (Fase 4)
 
-- **Comparação, preenchimento de formulários e geração** ainda não existem (Fases 4 a 6).
+- **Preenchimento de formulários, geração e automação, empresas e administração** ainda não existem (Fases 5 a 8).
 - **Nada foi validado em Cloudflare real** (D1, R2, Workers, CPU de 10 ms, custo de escritas do FTS5). Os testes rodam em libSQL local com armazenamento em memória.
 - **Texto**: DOCX mostra só texto (sem layout, tabelas ou imagens). PDFs com mais de 300 páginas, ou com uma página de mais de 30.000 caracteres, não são extraídos.
 - **PDF com texto ilegível** vira `extraction_failed` e não oferece OCR (decisão do briefing); só `needs_ocr` abre o OCR.
@@ -26,3 +26,15 @@
 - **Idioma**: detector próprio (pt/en/es), sem `franc`; textos curtos resultam em `und`.
 - **Escrita em lote com `json_each`** não foi validada em D1 real.
 - **Quotas**: inclui 300 análises/mês.
+
+## Fase 4 (comparação)
+
+- **Roda no navegador e não grava nada**: não há histórico de comparações; fechar a tela perde o resultado (só os arquivos exportados ficam). Documentos muito grandes (milhares de linhas) podem travar a aba por instantes; o limite é de 3.000 linhas por lado, com aviso.
+- **Só dentro de um workspace**, e só com texto extraído nos dois lados (sem texto, a tela avisa qual lado falta).
+- **Cláusulas** são heurística de melhor esforço (numeração no começo da linha). Erra em PDFs que perdem as quebras de linha, em listas numeradas que não são cláusulas e em cláusulas movidas e reescritas (aparecem como removida + adicionada). "Possível renumeração" exige confirmação humana.
+- **Campos da comparação não são reconferidos pelo servidor** (não são gravados). "Alterado" só vale quando os dois valores têm o mesmo rótulo; sem rótulo aparecem como "só em A" e "só em B".
+- **O diff compara texto, não significado**: reformular uma frase sem mudar o sentido aparece como alteração, e a similaridade é uma proporção de linhas iguais.
+- **Nenhum juízo jurídico**: as situações (igual, alterada, removida…) descrevem mudança de texto, não validade ou efeito de cláusula.
+- DOCX, TXT, MD e CSV são comparados por **seção** (~6.000 caracteres), não por página; as "páginas" citadas são seções.
+- `contract_party`, `deadline_expression` e `obligation_marker` não foram implementados.
+- O teste de fumaça em Chromium (24 verificações) roda contra a API em Node com armazenamento em memória, **não** contra o Worker real.

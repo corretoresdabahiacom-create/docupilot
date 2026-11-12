@@ -312,6 +312,16 @@ export function DocumentPage() {
           <Button type="button" onClick={() => void download()}>
             {t('document.download')}
           </Button>
+          {currentVersion && (
+            <Link
+              to={`/compare?ld=${doc.id}&lv=${
+                d.versions.find((v) => v.id !== doc.currentVersionId)?.id ?? currentVersion.id
+              }&rd=${doc.id}&rv=${currentVersion.id}`}
+              className="inline-flex min-h-11 items-center rounded-md border border-[var(--border)] px-4 text-sm font-medium"
+            >
+              {d.versions.length > 1 ? t('compare.versions') : t('compare.withOther')}
+            </Link>
+          )}
           {canDelete && (
             <Button
               type="button"

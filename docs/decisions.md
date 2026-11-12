@@ -107,3 +107,15 @@ Item que não confere é descartado e contado (`rejected`); se todos forem recus
 - **Busca no documento**: a mesma busca por palavra-chave, com filtro `documentId`. Não é pergunta em linguagem natural (exigiria IA externa, desligada por padrão).
 - **Resumo**: extrativo (TextRank) calculado no navegador sobre o texto já armazenado; modos por cláusulas e por obrigações aparecem como indisponíveis.
 - **Desvios do briefing** (todos em `docs/heuristics.md` §15): conflitos só para rótulos de valor único (lista fechada); `cpf_cnpj_dv_invalid` exige a palavra CPF/CNPJ até 20 caracteres antes; regra de anexo compara com nomes de arquivo; campo obrigatório vazio em AcroForm é **informado pelo cliente** (`reportedBy: 'client'`), pois o servidor não relê o PDF.
+
+## D13. Comparação no navegador, sem rota nova e sem gravação (Fase 4)
+
+O texto de cada versão já fica em `document_pages` (inclusive das versões antigas) e a rota de páginas aceita `versionId`. Por isso a comparação **não tem rota própria**: o navegador baixa o texto das duas versões (10 páginas por requisição, permissão de leitura) e roda o motor de `@docupilot/shared` localmente (limite de 10 ms de CPU do Worker e custo zero de escritas no D1).
+
+- **Nada é gravado.** As tabelas `document_comparisons` e `comparison_results` continuam sem uso; o resultado existe só na tela e nos arquivos exportados. Histórico de comparações fica fora do escopo da Fase 4. Teste confirma que a comparação não altera campos, tarefas nem comparações no banco.
+- **Dois lados no mesmo workspace**: versões do mesmo documento ou documentos diferentes. Comparar entre workspaces não é possível (cada leitura exige membro do workspace).
+- **Texto** (`diff_textual`): `diff@9` (Myers) sobre linhas/frases; blocos substituídos recebem alinhamento por similaridade de palavras (≥ 0,3), com diff de palavras por par. Limite de 3.000 linhas por lado (excedente avisado).
+- **Campos** (`diff_fields`): os padrões da Fase 3 rodam nos dois textos; "alterado" só com o mesmo rótulo. Diferente da análise da Fase 3, **esses campos não passam pela reconferência do servidor**, porque não são gravados; a tela diz isso e mostra página e trecho de origem dos dois lados.
+- **Cláusulas** (`clause_boundary` + `diff_clause`): heurística por numeração no começo da linha; "possível renumeração" (palavras em comum ≥ 80%) é marcada como exige revisão humana. Os rótulos descrevem **mudança de texto**, nunca validade jurídica.
+- **Exportação** (CSV, JSON, MD) gerada no navegador. CSV com BOM UTF-8 e proteção contra injeção de fórmula (células iniciadas por `= + - @` recebem apóstrofo); Markdown com escape; nome de arquivo sanitizado; todos levam o aviso de comparação heurística.
+- `contract_party`, `deadline_expression` e `obligation_marker` não fazem parte da Fase 4 do briefing e seguem **não implementados**.

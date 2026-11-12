@@ -23,3 +23,20 @@ export {
   type SummaryResult,
   type SummarySentence,
 } from './patterns/summary_textrank';
+export * from './compare';
+export { MAX_UNITS, toUnits, type Unit, type Context } from './compare_util';
+export { splitClauses, clauseKey, type Clause, type ClauseSplit } from './patterns/clause_boundary';
+export { diffText, type TextDiff, type TextHunk, type InlinePart } from './patterns/diff_textual';
+export {
+  diffFields,
+  type ComparedField,
+  type FieldSide,
+  type FieldDiffStatus,
+} from './patterns/diff_fields';
+export {
+  diffClauses,
+  RENUMBER_MIN_SIMILARITY,
+  type ClauseComparison,
+  type ComparedClause,
+  type ClauseDiffStatus,
+} from './patterns/diff_clause';
