@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { LOCALES, setLocale } from '../i18n';
 import { api } from '../lib/api';
+import { useNotifications } from '../lib/creation';
 import { applyTheme, getThemePref, type ThemePref } from '../lib/theme';
 import { Banner, Button } from './ui';
 
@@ -27,6 +28,7 @@ export function Layout({ children, signedIn }: { children: ReactNode; signedIn: 
   const online = useOnline();
   const [theme, setTheme] = useState<ThemePref>(getThemePref());
   const qc = useQueryClient();
+  const unread = useNotifications(signedIn).data?.unread ?? 0;
   const navigate = useNavigate();
 
   const logout = async () => {
@@ -74,6 +76,30 @@ export function Layout({ children, signedIn }: { children: ReactNode; signedIn: 
               </option>
             ))}
           </select>
+          {signedIn &&
+            (['create', 'workflows'] as const).map((k) => (
+              <Link
+                key={k}
+                to={`/${k}`}
+                className="inline-flex min-h-11 items-center px-2 text-sm underline"
+              >
+                {t(`nav.${k}`)}
+              </Link>
+            ))}
+          {signedIn && (
+            <Link
+              to="/notifications"
+              className="inline-flex min-h-11 items-center px-2 text-sm underline"
+              aria-label={unread ? `${t('nav.notifications')} (${unread})` : t('nav.notifications')}
+            >
+              {t('nav.notifications')}
+              {unread > 0 && (
+                <span className="ml-1 rounded-full bg-[var(--danger)] px-1.5 text-xs text-white">
+                  {unread}
+                </span>
+              )}
+            </Link>
+          )}
           {signedIn && (
             <Link
               to="/profiles"

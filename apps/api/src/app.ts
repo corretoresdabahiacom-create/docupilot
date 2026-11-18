@@ -8,6 +8,9 @@ import { healthRoutes } from './routes/health';
 import { consentRoutes } from './routes/consents';
 import { documentRoutes } from './routes/documents';
 import { folderRoutes } from './routes/folders';
+import { generatedRoutes } from './routes/generated';
+import { workflowRoutes } from './routes/workflows';
+import { notificationRoutes } from './routes/notifications';
 import { profileRoutes } from './routes/profiles';
 import { searchRoutes } from './routes/search';
 import { uploadRoutes } from './routes/uploads';
@@ -35,8 +38,11 @@ export function createApp(deps: AppDeps) {
   app.route('/workspaces', documentRoutes);
   app.route('/workspaces', analysisRoutes);
   app.route('/workspaces', searchRoutes);
+  app.route('/workspaces', generatedRoutes);
+  app.route('/workspaces', workflowRoutes);
   app.route('/me/consents', consentRoutes);
   app.route('/me/profiles', profileRoutes);
+  app.route('/me/notifications', notificationRoutes);
 
   app.notFound((c) =>
     c.json({ error: { code: 'NOT_FOUND', message: 'Recurso não encontrado.' } }, 404),

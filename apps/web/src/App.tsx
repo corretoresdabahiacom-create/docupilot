@@ -3,6 +3,11 @@ import { Layout } from './components/Layout';
 import { useMe } from './lib/queries';
 import { AuthPage } from './pages/AuthPage';
 import { ComparePage } from './pages/ComparePage';
+import { CreatePage } from './pages/CreatePage';
+import { EditorPage } from './pages/EditorPage';
+import { ExecutionPage } from './pages/ExecutionPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { WorkflowsPage } from './pages/WorkflowsPage';
 import { DocumentPage } from './pages/DocumentPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 import { FillFormPage } from './pages/FillFormPage';
@@ -41,6 +46,26 @@ export function App() {
         <Route
           path="/compare"
           element={signedIn ? <ComparePage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/create"
+          element={signedIn ? <CreatePage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/create/:id"
+          element={signedIn ? <EditorPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/workflows"
+          element={signedIn ? <WorkflowsPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/workflows/executions/:eid"
+          element={signedIn ? <ExecutionPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/notifications"
+          element={signedIn ? <NotificationsPage /> : <Navigate to="/login" replace />}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -359,6 +359,104 @@ try {
   await page.getByText(/Ficaram em branco:/).waitFor();
   check('lista os campos que ficaram em branco', true);
 
+  // 9c. Fase 6: criar a partir de modelo, editar, salvar e exportar (PDF/DOCX/HTML)
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await page.goto(`${BASE}/create`);
+  await page.getByRole('button', { name: /Proposta/ }).click();
+  check(
+    'modelos avisam que não têm validação jurídica',
+    await page
+      .getByText(/NÃO têm validação jurídica/)
+      .first()
+      .isVisible(),
+  );
+  await page.getByLabel('Cliente').fill('ACME Ltda');
+  await page.getByRole('button', { name: 'Criar a partir do modelo' }).click();
+  await page.getByLabel('Área de edição do documento').waitFor();
+  check(
+    'valor digitado entrou no modelo e o que faltou continua visível',
+    (await page.getByLabel('Área de edição do documento').innerText()).includes('ACME Ltda') &&
+      (await page.getByLabel('Área de edição do documento').innerText()).includes('{{empresa}}'),
+  );
+  await page.getByText(/campo\(s\) ainda sem valor/).waitFor();
+  await page.getByLabel('Área de edição do documento').click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.type(' Texto acrescentado no editor.');
+  await page.getByRole('button', { name: 'Negrito' }).click();
+  await page.getByRole('button', { name: 'Salvar' }).click();
+  await page.getByText('Documento salvo.').waitFor();
+  check('salva a edição (versão 2)', await page.getByText(/versão 2/).isVisible());
+  await page.screenshot({ path: join(OUT, '07-editor.png') });
+
+  const dl = async (label) => {
+    const [d] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: label, exact: true }).click(),
+    ]);
+    const path = join(OUT, `saida-${label}`);
+    await d.saveAs(path);
+    return { path, name: d.suggestedFilename() };
+  };
+  const pdfOut = await dl('PDF');
+  const pdfDoc = await PDFDocument.load(readFileSync(pdfOut.path));
+  check('exporta PDF válido', pdfOut.name.endsWith('.pdf') && pdfDoc.getPageCount() >= 1);
+  const docxOut = await dl('DOCX');
+  check(
+    'exporta DOCX (arquivo zip)',
+    docxOut.name.endsWith('.docx') && readFileSync(docxOut.path).subarray(0, 2).toString() === 'PK',
+  );
+  const htmlOut = await dl('HTML');
+  const html = readFileSync(htmlOut.path, 'utf8');
+  check(
+    'HTML exportado não tem script e declara CSP',
+    !/<script/i.test(html) &&
+      html.includes('Content-Security-Policy') &&
+      html.includes('ACME Ltda'),
+  );
+  await dl('MD');
+  await dl('TXT');
+  await page.getByText(/ainda estão em branco no arquivo/).waitFor();
+  check('avisa que há campos em branco no arquivo exportado', true);
+
+  // 9d. Fase 6: workflow só com aprovação humana (sem documentos) → pausa → aprova em duas etapas
+  await page.goto(`${BASE}/workflows`);
+  await page.getByRole('button', { name: 'Novo workflow' }).click();
+  await page.getByLabel('Nome do workflow').fill('Fluxo de aprovação');
+  await page.getByRole('button', { name: 'Remover passo' }).click();
+  await page.getByLabel('Adicionar passo').selectOption('approval');
+  await page.getByRole('button', { name: 'Adicionar' }).click();
+  await page.getByLabel('Adicionar passo').selectOption('output');
+  await page.getByRole('button', { name: 'Adicionar' }).click();
+  await page.getByRole('button', { name: 'Salvar' }).click();
+  await page.getByText('Fluxo de aprovação').first().waitFor();
+  await page.getByRole('button', { name: 'Executar' }).first().click();
+  await page.getByText(/Os documentos precisam ter sido analisados/).waitFor();
+  await page.getByRole('button', { name: 'Executar' }).last().click();
+  await page
+    .getByText(/Aguardando aprovação/)
+    .first()
+    .waitFor();
+  check('execução pausa na aprovação humana', true);
+  await page.getByRole('button', { name: 'Aprovar…' }).click();
+  check(
+    'aprovação em workspace pessoal exige a caixa de irreversibilidade',
+    await page.getByRole('button', { name: 'Confirmar', exact: true }).isDisabled(),
+  );
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+  await page
+    .getByText(/Concluída/)
+    .first()
+    .waitFor();
+  check('aprovada, a execução conclui', true);
+  await page.screenshot({ path: join(OUT, '08-workflow.png') });
+  await page.goto(`${BASE}/notifications`);
+  await page
+    .getByText(/Workflow concluído/)
+    .first()
+    .waitFor();
+  check('notificação dentro do app (sem push)', true);
+
   // 10. layout de celular
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto(BASE);

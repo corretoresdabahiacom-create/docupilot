@@ -38,3 +38,73 @@ body {
     Roboto,
     sans-serif;
 }
+
+/* Editor de documentos (Tiptap): o reset do Tailwind remove o estilo de títulos, listas e tabelas. */
+.tiptap-doc {
+  min-height: 16rem;
+  outline: none;
+  line-height: 1.5;
+}
+.tiptap-doc:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+.tiptap-doc > * + * {
+  margin-top: 0.6rem;
+}
+.tiptap-doc h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.tiptap-doc h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.tiptap-doc h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.tiptap-doc ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.tiptap-doc ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.tiptap-doc blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted);
+}
+.tiptap-doc pre {
+  background: var(--bg);
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+.tiptap-doc hr {
+  border-color: var(--border);
+}
+.tiptap-doc a {
+  text-decoration: underline;
+  color: var(--primary);
+}
+.tiptap-doc img {
+  max-width: 100%;
+  height: auto;
+}
+.tiptap-doc table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+.tiptap-doc th,
+.tiptap-doc td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+}
+.tiptap-doc th {
+  background: var(--bg);
+  font-weight: 700;
+}

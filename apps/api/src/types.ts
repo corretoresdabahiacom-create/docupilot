@@ -32,6 +32,8 @@ export interface AppConfig {
   turnstileSecret?: string;
   /** Chave AES-GCM (base64, 32 bytes) dos perfis de dados pessoais. Ausente = recurso desligado. */
   piiKey?: string;
+  /** Só testes: reduz os limites do motor de workflow (timeout/retry). */
+  workflowLimits?: { stepTimeoutMs?: number; totalTimeoutMs?: number; maxRetries?: number };
   pbkdf2Iterations: number;
   fetchImpl?: typeof fetch;
 }

@@ -2,7 +2,7 @@
 
 Plataforma multi-tenant para organizar, extrair, comparar, preencher e gerar documentos, com rastreabilidade de origem e revisão humana. **Sem IA generativa por padrão**: o que é extração determinística, heurística ou IA é sempre declarado.
 
-> Estado: **Fase 5 (preenchimento de formulário e perfis)** concluída, aguardando aprovação. As Fases 2, 3 e 4 seguem com aprovação formal pendente (você disse "aprovo depois"). Siga as fases em ordem; cada uma termina com aprovação.
+> Estado: **Fase 6 (criação e automação)** concluída, aguardando aprovação. As Fases 2, 3, 4 e 5 seguem com aprovação formal pendente. Siga as fases em ordem; cada uma termina com aprovação.
 
 ## Estrutura
 
@@ -35,3 +35,10 @@ Teste de fumaça no navegador (Chromium): compile o front, suba `apps/api/e2e/se
 ## Princípios
 
 Custo zero, sem cartão. Nada é apresentado como operacional se não estiver configurado. Nunca inventar dado extraído. Nenhum parecer jurídico, contábil, médico ou fiscal. Nenhum documento enviado a terceiros sem consentimento registrado.
+
+## Fase 6 (criação e automação)
+
+- **Criar documentos** (`/create`): editor Tiptap (títulos, listas, citações, tabelas, imagens embutidas, links), 10 modelos de texto com campos `{{chave}}` (**sem validação jurídica**; campo vazio continua visível), versão otimista e exportação para PDF, DOCX, HTML, Markdown e TXT gerada no navegador (layout simples; para layout complexo, HTML + imprimir).
+- **Workflows** (`/workflows`): fluxos lineares de até 10 passos (ler campos extraídos, validar, comparar campos, gerar documento, aprovação humana, resumo), sem passos externos, com tempo total de 5 min, 30 s por passo e até 2 novas tentativas em falha transitória. A aprovação pausa a execução: em workspace pessoal exige confirmação em duas etapas; em equipe, quem iniciou não aprova. Tudo fica registrado em `approvals` e na auditoria.
+- **Notificações** (`/notifications`): só dentro do app, sem Web Push.
+- Detalhes e limites: `docs/decisions.md` (D15), `docs/limitations.md`.

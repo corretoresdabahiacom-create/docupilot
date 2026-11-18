@@ -5,3 +5,5 @@ export * from './schemas';
 export * from './text';
 export * from './extraction';
 export * from './forms';
+export * from './documents';
+export * from './workflows';

@@ -52,6 +52,13 @@ Navegador (React PWA)
 3. A pessoa confirma, escolhe candidato ou digita. `fillPdf` grava só os `confirmado` e baixa `<nome>-preenchido.pdf`; a tela lista o que ficou em branco ou falhou (D14).
 4. `/profiles` gerencia perfis (`/api/me/profiles`, AES-GCM) e o consentimento `pii_profile`.
 
+## Criação e automação (Fase 6)
+
+1. Em `/create` a pessoa começa em branco ou por um dos 10 modelos (`POST .../generated`, valores `{{chave}}` digitados). Em `/create/:id` o Tiptap edita; salvar envia o JSON com a `version` (`PUT`, 409 em conflito) e o servidor revalida com `validateDoc`.
+2. Exportar: o navegador chama `POST .../generated/:id/exports` (permissão, cota, auditoria) e **só então** gera TXT/MD/HTML (`@docupilot/shared`) ou PDF/DOCX (`apps/web/src/lib/docExport.ts`) e baixa (D15).
+3. Em `/workflows` monta-se uma lista linear de passos (validada no navegador e no servidor). `POST .../workflows/:id/run` executa com `runWorkflow` (motor puro em `@docupilot/shared`, executores em `apps/api/src/workflows/executors.ts`) e grava o estado em `workflow_executions.step_log`.
+4. Em `approval` a execução pausa, avisa os aprovadores em `/notifications` e espera `POST .../workflow-executions/:id/decision`; aprovando, o motor continua do passo seguinte. Nenhum passo envia nada para fora do DocuPilot.
+
 ## Estados reais (R4)
 
 `GET /api/health` informa se o armazenamento, o Turnstile e a chave dos perfis (`pii`) estão configurados e o valor das feature flags. A interface desabilita o envio e mostra o motivo quando o armazenamento não está configurado. Em produção, sem segredo do Turnstile, cadastro/login/upload respondem `SERVICE_NOT_CONFIGURED`.

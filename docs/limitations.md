@@ -49,3 +49,16 @@
 - **Perfil**: até 10 por usuário; sem rotação de chave; perdeu `PII_ENCRYPTION_KEY`, perdeu os perfis. Nada ainda usa `extracted_fields.personal_profile_id`; só a limpeza na exclusão existe.
 - Sem a chave configurada o recurso fica desligado (503); isso é o estado padrão até você criar o segredo.
 - O teste de fumaça em Chromium (34 verificações) usa a API em Node com armazenamento em memória e uma chave de teste, **não** o Worker real.
+
+## Fase 6 (criação e automação)
+
+- **Modelos não têm validação jurídica, contábil ou fiscal.** São textos de partida; a interface avisa em cada tela. Não há modelos próprios (`document_templates` sem uso) nem biblioteca compartilhada.
+- **PDF e DOCX têm layout simples** (títulos, parágrafos, listas, citações, código, tabelas básicas, imagens PNG/JPEG). Sem colunas, cabeçalho/rodapé, numeração de página, nem quebra de página manual. O PDF usa a fonte padrão Helvetica: caracteres fora do WinAnsi (japonês, emoji, alguns símbolos) viram `?` com aviso; GIF não entra no PDF; links no PDF são só coloridos e sublinhados (sem anotação clicável). Tabelas muito altas ou com células muito longas podem quebrar mal entre páginas. Para layout complexo, use HTML e imprima pelo navegador.
+- **Exportação não é versionada**: o arquivo sai do conteúdo atual do editor (mesmo sem salvar) e a cota conta cada exportação. A cota padrão é **100/mês** (o briefing citava 200; D4).
+- **Edição simultânea**: sem colaboração em tempo real. Salvamento com versão otimista; em conflito (409) a tela manda copiar o texto e recarregar.
+- **Imagens** só embutidas (PNG/JPEG/GIF, até ~400 KB cada); documento grande demais (> ~900 mil caracteres de JSON) é recusado.
+- **Workflows**: lineares, até 10 passos, sem edição na interface (para mudar, crie outro e exclua o antigo; a API tem `PUT`). `compare` no servidor é **só de campos extraídos** (resumo), não de texto ou cláusulas. Só lê análises já feitas: sem análise atualizada o passo falha, nunca inventa dados. O tempo de 5 min e os 30 s por passo valem para o **tempo ativo**; a espera por aprovação não tem prazo (execuções pendentes só saem por decisão ou cancelamento).
+- **Retry** só cobre falha transitória (erro do banco, tempo do passo); como todos os passos são locais e rápidos, na prática raramente dispara. É coberto por testes do motor com executores simulados.
+- **Aprovação em equipe**: vale a permissão `approve` do papel; o bloqueio de "quem iniciou" compara usuários, então um dono que inicia a execução não pode aprová-la, mas outro membro com a permissão pode.
+- **Não testado no Cloudflare real**: o orçamento de 50 consultas ao D1 por invocação e os 10 ms de CPU nas rotas de workflow e de documentos criados; a validação de documentos grandes pode ser cara em CPU. Tiptap, `docx` e `pdf-lib` foram testados em jsdom e em Chromium contra a API em Node, **não** em navegadores diversos nem em celulares reais.
+- O teste de fumaça em Chromium agora tem 45 verificações.
