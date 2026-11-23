@@ -24,6 +24,22 @@ export function createApp(deps: AppDeps) {
     await next();
   });
   app.use('*', secureHeaders());
+  // Sem banco configurado (R4) nada funciona de verdade: só /health responde, informando o motivo.
+  app.use('*', async (c, next) => {
+    if (deps.config.databaseConfigured === false && !c.req.path.endsWith('/health')) {
+      if (c.req.path.includes('/billing/')) return next();
+      return c.json(
+        {
+          error: {
+            code: 'SERVICE_NOT_CONFIGURED',
+            message: 'O banco de dados ainda não foi configurado (DATABASE_URL).',
+          },
+        },
+        503,
+      );
+    }
+    await next();
+  });
   app.use('*', csrfOrigin);
 
   // Monetização desligada (R7): qualquer rota de cobrança responde 404.

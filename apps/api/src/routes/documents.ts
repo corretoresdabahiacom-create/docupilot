@@ -235,14 +235,14 @@ documentRoutes.delete(
     const bytes = versions.reduce((n, v) => n + v.sizeBytes, 0);
 
     // Ordem importa: o texto é descontado e as páginas removidas antes do documento, para os
-    // gatilhos do índice FTS5 rodarem e o contador de texto do workspace ficar correto.
+    // a coluna gerada `text_search` acompanhar e o contador de texto do workspace ficar correto.
     await runBatch(db, [
       db
         .update(workspaces)
         .set({
-          storageBytesUsed: sql`max(0, ${workspaces.storageBytesUsed} - ${bytes})`,
-          documentCount: sql`max(0, ${workspaces.documentCount} - 1)`,
-          textCharsUsed: sql`max(0, ${workspaces.textCharsUsed} - coalesce((select sum(char_count) from document_pages where document_id = ${doc.id}), 0))`,
+          storageBytesUsed: sql`greatest(0, ${workspaces.storageBytesUsed} - ${bytes})`,
+          documentCount: sql`greatest(0, ${workspaces.documentCount} - 1)`,
+          textCharsUsed: sql`greatest(0, ${workspaces.textCharsUsed} - coalesce((select sum(char_count) from document_pages where document_id = ${doc.id}), 0))`,
         })
         .where(eq(workspaces.id, workspaceId)),
       db.delete(documentPages).where(eq(documentPages.documentId, doc.id)),
@@ -418,8 +418,8 @@ documentRoutes.delete(
       db
         .update(workspaces)
         .set({
-          storageBytesUsed: sql`max(0, ${workspaces.storageBytesUsed} - ${version.sizeBytes})`,
-          textCharsUsed: sql`max(0, ${workspaces.textCharsUsed} - coalesce((select sum(char_count) from document_pages where version_id = ${version.id}), 0))`,
+          storageBytesUsed: sql`greatest(0, ${workspaces.storageBytesUsed} - ${version.sizeBytes})`,
+          textCharsUsed: sql`greatest(0, ${workspaces.textCharsUsed} - coalesce((select sum(char_count) from document_pages where version_id = ${version.id}), 0))`,
         })
         .where(eq(workspaces.id, workspaceId)),
       db.delete(documentPages).where(eq(documentPages.versionId, version.id)),
@@ -522,7 +522,7 @@ documentRoutes.put(
       db
         .update(workspaces)
         .set({
-          textCharsUsed: sql`max(0, ${workspaces.textCharsUsed} - ${oldChars}) + ${newChars}`,
+          textCharsUsed: sql`greatest(0, ${workspaces.textCharsUsed} - ${oldChars}) + ${newChars}`,
         })
         .where(eq(workspaces.id, workspaceId)),
       db
@@ -571,7 +571,7 @@ documentRoutes.post(
         db
           .update(workspaces)
           .set({
-            textCharsUsed: sql`max(0, ${workspaces.textCharsUsed} - coalesce((select sum(char_count) from document_pages where version_id = ${version.id}), 0))`,
+            textCharsUsed: sql`greatest(0, ${workspaces.textCharsUsed} - coalesce((select sum(char_count) from document_pages where version_id = ${version.id}), 0))`,
           })
           .where(eq(workspaces.id, workspaceId)),
         db.delete(documentPages).where(eq(documentPages.versionId, version.id)),

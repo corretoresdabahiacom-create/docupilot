@@ -7,7 +7,7 @@ Plataforma multi-tenant para organizar, extrair, comparar, preencher e gerar doc
 ## Estrutura
 
 ```
-apps/api         Cloudflare Worker (Hono + Drizzle + D1)
+apps/api         Cloudflare Worker (Hono + Drizzle + Postgres/Supabase)
 apps/web         React + Vite + Tailwind (PWA)
 packages/shared  Papéis, quotas, validação de arquivos, esquemas zod
 docs/            Decisões, limites do free tier, arquitetura, segurança
@@ -21,7 +21,7 @@ pnpm lint && pnpm typecheck && pnpm test
 pnpm --filter @docupilot/web build
 ```
 
-A API roda em Workers; para rodar localmente é preciso criar um D1 (`wrangler d1 create docupilot`), colocar o id em `apps/api/wrangler.toml`, aplicar as migrações (`wrangler d1 migrations apply docupilot --local`) e subir `pnpm --filter @docupilot/api dev`. O front usa proxy para `localhost:8787` (`pnpm --filter @docupilot/web dev`).
+A API roda em Workers com **Postgres no Supabase** (driver `postgres.js` pelo pooler, porta 6543). Para usar: crie um projeto Supabase (plano Free), copie a connection string do **Transaction pooler**, aplique `apps/api/migrations/0000_*.sql` e `0001_*.sql` (SQL Editor do Supabase ou `psql`) e grave o segredo com `wrangler secret put DATABASE_URL`. Sem `DATABASE_URL` a API responde 503 `SERVICE_NOT_CONFIGURED` (só `/health` funciona). Em desenvolvimento use `DATABASE_URL` em `apps/api/.dev.vars` e `pnpm --filter @docupilot/api dev`; o front usa proxy para `localhost:8787` (`pnpm --filter @docupilot/web dev`). Os testes não precisam de Supabase: rodam em Postgres embutido (PGlite) com as mesmas migrações.
 
 Teste de fumaça no navegador (Chromium): compile o front, suba `apps/api/e2e/server.ts` com `tsx` e rode `node apps/web/e2e/smoke.mjs` (Playwright não é dependência do repositório).
 

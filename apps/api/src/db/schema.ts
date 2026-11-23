@@ -1,30 +1,32 @@
 /**
  * Modelo de dados (briefing §6.1). Convenções:
- * - ids são UUID texto; datas são epoch em milissegundos;
+ * - ids são UUID texto; datas são epoch em milissegundos (bigint);
  * - estados usam CHECK; FKs explícitas; índices em colunas de posse e busca.
  */
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
+  boolean,
   check,
+  doublePrecision,
   index,
   integer,
+  pgTable,
   primaryKey,
-  real,
-  sqliteTable,
   text,
   uniqueIndex,
-} from 'drizzle-orm/sqlite-core';
+} from 'drizzle-orm/pg-core';
 
 const id = () =>
   text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID());
 const createdAt = () =>
-  integer('created_at')
+  bigint('created_at', { mode: 'number' })
     .notNull()
     .$defaultFn(() => Date.now());
 const updatedAt = () =>
-  integer('updated_at')
+  bigint('updated_at', { mode: 'number' })
     .notNull()
     .$defaultFn(() => Date.now());
 const fk = (name: string) => text(name).notNull();
@@ -32,14 +34,14 @@ const fk = (name: string) => text(name).notNull();
 const ROLES_SQL = sql`('owner','admin','manager','approver','editor','viewer')`;
 
 // ---------- identidade ----------
-export const users = sqliteTable(
+export const users = pgTable(
   'users',
   {
     id: id(),
     email: text('email').notNull(),
     passwordHash: text('password_hash').notNull(),
     status: text('status').notNull().default('active'),
-    isPlatformAdmin: integer('is_platform_admin', { mode: 'boolean' }).notNull().default(false),
+    isPlatformAdmin: boolean('is_platform_admin').notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -49,7 +51,7 @@ export const users = sqliteTable(
   ],
 );
 
-export const userProfiles = sqliteTable('user_profiles', {
+export const userProfiles = pgTable('user_profiles', {
   userId: text('user_id')
     .primaryKey()
     .references(() => users.id, { onDelete: 'cascade' }),
@@ -60,7 +62,7 @@ export const userProfiles = sqliteTable('user_profiles', {
   updatedAt: updatedAt(),
 });
 
-export const sessions = sqliteTable(
+export const sessions = pgTable(
   'sessions',
   {
     id: id(),
@@ -68,8 +70,8 @@ export const sessions = sqliteTable(
     /** SHA-256 (hex) do token; o token em claro só existe no cookie. */
     tokenHash: text('token_hash').notNull(),
     createdAt: createdAt(),
-    rotatedAt: integer('rotated_at').notNull(),
-    expiresAt: integer('expires_at').notNull(),
+    rotatedAt: bigint('rotated_at', { mode: 'number' }).notNull(),
+    expiresAt: bigint('expires_at', { mode: 'number' }).notNull(),
     userAgent: text('user_agent'),
   },
   (t) => [
@@ -80,7 +82,7 @@ export const sessions = sqliteTable(
 );
 
 // ---------- organizações e workspaces ----------
-export const organizations = sqliteTable(
+export const organizations = pgTable(
   'organizations',
   {
     id: id(),
@@ -96,7 +98,7 @@ export const organizations = sqliteTable(
   ],
 );
 
-export const organizationMembers = sqliteTable(
+export const organizationMembers = pgTable(
   'organization_members',
   {
     organizationId: fk('organization_id').references(() => organizations.id, {
@@ -113,7 +115,7 @@ export const organizationMembers = sqliteTable(
   ],
 );
 
-export const organizationInvites = sqliteTable(
+export const organizationInvites = pgTable(
   'organization_invites',
   {
     id: id(),
@@ -124,8 +126,8 @@ export const organizationInvites = sqliteTable(
     tokenHash: text('token_hash').notNull(),
     role: text('role').notNull(),
     createdBy: fk('created_by').references(() => users.id),
-    expiresAt: integer('expires_at').notNull(),
-    usedAt: integer('used_at'),
+    expiresAt: bigint('expires_at', { mode: 'number' }).notNull(),
+    usedAt: bigint('used_at', { mode: 'number' }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -134,7 +136,7 @@ export const organizationInvites = sqliteTable(
   ],
 );
 
-export const workspaces = sqliteTable(
+export const workspaces = pgTable(
   'workspaces',
   {
     id: id(),
@@ -142,18 +144,18 @@ export const workspaces = sqliteTable(
       onDelete: 'cascade',
     }),
     name: text('name').notNull(),
-    isPersonal: integer('is_personal', { mode: 'boolean' }).notNull().default(false),
-    storageBytesUsed: integer('storage_bytes_used').notNull().default(0),
+    isPersonal: boolean('is_personal').notNull().default(false),
+    storageBytesUsed: bigint('storage_bytes_used', { mode: 'number' }).notNull().default(0),
     documentCount: integer('document_count').notNull().default(0),
-    /** Total de caracteres de texto extraído guardados no D1 (limite por workspace). */
-    textCharsUsed: integer('text_chars_used').notNull().default(0),
+    /** Total de caracteres de texto extraído guardados no banco (limite por workspace). */
+    textCharsUsed: bigint('text_chars_used', { mode: 'number' }).notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [index('workspaces_org_idx').on(t.organizationId)],
 );
 
-export const workspaceMembers = sqliteTable(
+export const workspaceMembers = pgTable(
   'workspace_members',
   {
     workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
@@ -169,7 +171,7 @@ export const workspaceMembers = sqliteTable(
 );
 
 // ---------- pastas e documentos ----------
-export const folders = sqliteTable(
+export const folders = pgTable(
   'folders',
   {
     id: id(),
@@ -187,7 +189,7 @@ export const folders = sqliteTable(
   ],
 );
 
-export const documents = sqliteTable(
+export const documents = pgTable(
   'documents',
   {
     id: id(),
@@ -210,7 +212,7 @@ export const documents = sqliteTable(
   ],
 );
 
-export const documentVersions = sqliteTable(
+export const documentVersions = pgTable(
   'document_versions',
   {
     id: id(),
@@ -218,7 +220,7 @@ export const documentVersions = sqliteTable(
     workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
     versionNumber: integer('version_number').notNull(),
     storageKey: text('storage_key').notNull(),
-    sizeBytes: integer('size_bytes').notNull(),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }).notNull(),
     mime: text('mime').notNull(),
     sha256: text('sha256').notNull(),
     createdBy: fk('created_by').references(() => users.id),
@@ -230,7 +232,7 @@ export const documentVersions = sqliteTable(
   ],
 );
 
-export const documentMetadata = sqliteTable('document_metadata', {
+export const documentMetadata = pgTable('document_metadata', {
   documentId: text('document_id')
     .primaryKey()
     .references(() => documents.id, { onDelete: 'cascade' }),
@@ -243,7 +245,7 @@ export const documentMetadata = sqliteTable('document_metadata', {
   updatedAt: updatedAt(),
 });
 
-export const documentHashes = sqliteTable(
+export const documentHashes = pgTable(
   'document_hashes',
   {
     id: id(),
@@ -254,14 +256,14 @@ export const documentHashes = sqliteTable(
     sha256: text('sha256').notNull(),
     simhash: text('simhash'),
     /** true quando o armazenamento validou o checksum no PUT. */
-    verifiedByStorage: integer('verified_by_storage', { mode: 'boolean' }).notNull().default(false),
+    verifiedByStorage: boolean('verified_by_storage').notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [index('doc_hashes_ws_sha_idx').on(t.workspaceId, t.sha256)],
 );
 
 /** Uploads em andamento (URL assinada emitida, objeto ainda não validado). */
-export const uploads = sqliteTable(
+export const uploads = pgTable(
   'uploads',
   {
     id: id(),
@@ -272,12 +274,12 @@ export const uploads = sqliteTable(
     userId: fk('user_id').references(() => users.id),
     fileName: text('file_name').notNull(),
     declaredMime: text('declared_mime').notNull(),
-    declaredSize: integer('declared_size').notNull(),
+    declaredSize: bigint('declared_size', { mode: 'number' }).notNull(),
     sha256: text('sha256').notNull(),
     storageKey: text('storage_key').notNull(),
     status: text('status').notNull().default('pending'),
     rejectReason: text('reject_reason'),
-    expiresAt: integer('expires_at').notNull(),
+    expiresAt: bigint('expires_at', { mode: 'number' }).notNull(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -287,11 +289,11 @@ export const uploads = sqliteTable(
   ],
 );
 
-/** Texto extraído por página/seção. `id` inteiro estável alimenta o índice FTS5 (migração 0003). */
-export const documentPages = sqliteTable(
+/** Texto extraído por página/seção. `id` inteiro estável; o índice de busca é a coluna gerada `text_search` (migração 0001). */
+export const documentPages = pgTable(
   'document_pages',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     versionId: fk('version_id').references(() => documentVersions.id, { onDelete: 'cascade' }),
     documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
     workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
@@ -307,7 +309,7 @@ export const documentPages = sqliteTable(
 );
 
 // ---------- extração ----------
-export const extractedFields = sqliteTable(
+export const extractedFields = pgTable(
   'extracted_fields',
   {
     id: id(),
@@ -319,7 +321,7 @@ export const extractedFields = sqliteTable(
     /** Rótulo imediatamente anterior ("vencimento", "total"); só datas e valores. */
     label: text('label'),
     patternId: text('pattern_id').notNull(),
-    confidence: real('confidence').notNull(),
+    confidence: doublePrecision('confidence').notNull(),
     sourceKind: text('source_kind').notNull(),
     personalProfileId: text('personal_profile_id'),
     createdAt: createdAt(),
@@ -334,7 +336,7 @@ export const extractedFields = sqliteTable(
   ],
 );
 
-export const extractionSources = sqliteTable(
+export const extractionSources = pgTable(
   'extraction_sources',
   {
     id: id(),
@@ -349,7 +351,7 @@ export const extractionSources = sqliteTable(
     /** Trecho ao redor, com SNIPPET_OPEN/SNIPPET_CLOSE marcando o valor. Gerado no servidor. */
     snippet: text('snippet'),
     patternId: text('pattern_id').notNull(),
-    confidence: real('confidence').notNull(),
+    confidence: doublePrecision('confidence').notNull(),
   },
   (t) => [
     index('extraction_sources_field_idx').on(t.extractedFieldId),
@@ -361,7 +363,7 @@ export const extractionSources = sqliteTable(
  * kind = 'analysis' (metadados da última análise, 1 por documento) ou 'inconsistency' (achados
  * por regra, payload JSON). Recriados a cada análise.
  */
-export const documentTasks = sqliteTable(
+export const documentTasks = pgTable(
   'document_tasks',
   {
     id: id(),
@@ -376,7 +378,7 @@ export const documentTasks = sqliteTable(
   (t) => [index('document_tasks_doc_kind_idx').on(t.documentId, t.kind)],
 );
 
-export const documentComparisons = sqliteTable('document_comparisons', {
+export const documentComparisons = pgTable('document_comparisons', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   leftVersionId: fk('left_version_id').references(() => documentVersions.id),
@@ -385,7 +387,7 @@ export const documentComparisons = sqliteTable('document_comparisons', {
   createdAt: createdAt(),
 });
 
-export const comparisonResults = sqliteTable('comparison_results', {
+export const comparisonResults = pgTable('comparison_results', {
   id: id(),
   comparisonId: fk('comparison_id').references(() => documentComparisons.id, {
     onDelete: 'cascade',
@@ -396,7 +398,7 @@ export const comparisonResults = sqliteTable('comparison_results', {
 });
 
 // ---------- geração e formulários ----------
-export const documentTemplates = sqliteTable('document_templates', {
+export const documentTemplates = pgTable('document_templates', {
   id: id(),
   workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
@@ -406,7 +408,7 @@ export const documentTemplates = sqliteTable('document_templates', {
   updatedAt: updatedAt(),
 });
 
-export const generatedDocuments = sqliteTable('generated_documents', {
+export const generatedDocuments = pgTable('generated_documents', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   templateId: text('template_id').references(() => documentTemplates.id),
@@ -418,7 +420,7 @@ export const generatedDocuments = sqliteTable('generated_documents', {
   updatedAt: updatedAt(),
 });
 
-export const formTemplates = sqliteTable('form_templates', {
+export const formTemplates = pgTable('form_templates', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
@@ -426,18 +428,18 @@ export const formTemplates = sqliteTable('form_templates', {
   createdAt: createdAt(),
 });
 
-export const formFields = sqliteTable('form_fields', {
+export const formFields = pgTable('form_fields', {
   id: id(),
   formTemplateId: fk('form_template_id').references(() => formTemplates.id, {
     onDelete: 'cascade',
   }),
   fieldName: text('field_name').notNull(),
   fieldKind: text('field_kind').notNull(),
-  required: integer('required', { mode: 'boolean' }).notNull().default(false),
+  required: boolean('required').notNull().default(false),
   mappedTo: text('mapped_to'),
 });
 
-export const formSubmissions = sqliteTable('form_submissions', {
+export const formSubmissions = pgTable('form_submissions', {
   id: id(),
   formTemplateId: fk('form_template_id').references(() => formTemplates.id, {
     onDelete: 'cascade',
@@ -449,8 +451,8 @@ export const formSubmissions = sqliteTable('form_submissions', {
   createdAt: createdAt(),
 });
 
-/** Campos sensíveis ficam criptografados (AES-GCM) antes de chegar ao D1. */
-export const personalDataProfiles = sqliteTable(
+/** Campos sensíveis ficam criptografados (AES-GCM) antes de chegar ao banco. */
+export const personalDataProfiles = pgTable(
   'personal_data_profiles',
   {
     id: id(),
@@ -465,7 +467,7 @@ export const personalDataProfiles = sqliteTable(
 );
 
 // ---------- workflows ----------
-export const workflowDefinitions = sqliteTable('workflow_definitions', {
+export const workflowDefinitions = pgTable('workflow_definitions', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
@@ -474,7 +476,7 @@ export const workflowDefinitions = sqliteTable('workflow_definitions', {
   updatedAt: updatedAt(),
 });
 
-export const workflowSteps = sqliteTable(
+export const workflowSteps = pgTable(
   'workflow_steps',
   {
     id: id(),
@@ -494,19 +496,19 @@ export const workflowSteps = sqliteTable(
   ],
 );
 
-export const workflowExecutions = sqliteTable('workflow_executions', {
+export const workflowExecutions = pgTable('workflow_executions', {
   id: id(),
   workflowId: fk('workflow_id').references(() => workflowDefinitions.id, {
     onDelete: 'cascade',
   }),
   status: text('status').notNull().default('running'),
   stepLog: text('step_log'),
-  startedAt: integer('started_at').notNull(),
-  finishedAt: integer('finished_at'),
+  startedAt: bigint('started_at', { mode: 'number' }).notNull(),
+  finishedAt: bigint('finished_at', { mode: 'number' }),
 });
 
 // ---------- colaboração ----------
-export const approvals = sqliteTable('approvals', {
+export const approvals = pgTable('approvals', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   subjectType: text('subject_type').notNull(),
@@ -514,10 +516,10 @@ export const approvals = sqliteTable('approvals', {
   decidedBy: fk('decided_by').references(() => users.id),
   decision: text('decision').notNull(),
   note: text('note'),
-  decidedAt: integer('decided_at').notNull(),
+  decidedAt: bigint('decided_at', { mode: 'number' }).notNull(),
 });
 
-export const comments = sqliteTable('comments', {
+export const comments = pgTable('comments', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
@@ -526,7 +528,7 @@ export const comments = sqliteTable('comments', {
   createdAt: createdAt(),
 });
 
-export const documentAnnotations = sqliteTable('document_annotations', {
+export const documentAnnotations = pgTable('document_annotations', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
@@ -538,7 +540,7 @@ export const documentAnnotations = sqliteTable('document_annotations', {
   updatedAt: updatedAt(),
 });
 
-export const documentShares = sqliteTable('document_shares', {
+export const documentShares = pgTable('document_shares', {
   id: id(),
   workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
@@ -547,65 +549,65 @@ export const documentShares = sqliteTable('document_shares', {
   createdAt: createdAt(),
 });
 
-export const sharedLinks = sqliteTable(
+export const sharedLinks = pgTable(
   'shared_links',
   {
     id: id(),
     workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
     documentId: fk('document_id').references(() => documents.id, { onDelete: 'cascade' }),
     tokenHash: text('token_hash').notNull(),
-    expiresAt: integer('expires_at').notNull(),
-    revokedAt: integer('revoked_at'),
+    expiresAt: bigint('expires_at', { mode: 'number' }).notNull(),
+    revokedAt: bigint('revoked_at', { mode: 'number' }),
     createdBy: fk('created_by').references(() => users.id),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex('shared_links_token_uq').on(t.tokenHash)],
 );
 
-export const sharedLinkAccessLogs = sqliteTable('shared_link_access_logs', {
+export const sharedLinkAccessLogs = pgTable('shared_link_access_logs', {
   id: id(),
   sharedLinkId: fk('shared_link_id').references(() => sharedLinks.id, { onDelete: 'cascade' }),
-  accessedAt: integer('accessed_at').notNull(),
+  accessedAt: bigint('accessed_at', { mode: 'number' }).notNull(),
   ipHash: text('ip_hash'),
 });
 
-export const notifications = sqliteTable(
+export const notifications = pgTable(
   'notifications',
   {
     id: id(),
     userId: fk('user_id').references(() => users.id, { onDelete: 'cascade' }),
     kind: text('kind').notNull(),
     body: text('body').notNull(),
-    readAt: integer('read_at'),
+    readAt: bigint('read_at', { mode: 'number' }),
     createdAt: createdAt(),
   },
   (t) => [index('notifications_user_idx').on(t.userId, t.readAt)],
 );
 
-export const reports = sqliteTable('reports', {
+export const reports = pgTable('reports', {
   id: id(),
   targetType: text('target_type').notNull(),
   targetRef: text('target_ref').notNull(),
   reason: text('reason').notNull(),
   status: text('status').notNull().default('open'),
-  resolvedAt: integer('resolved_at'),
+  resolvedAt: bigint('resolved_at', { mode: 'number' }),
   createdAt: createdAt(),
 });
 
 // ---------- uso, quotas e segurança ----------
-export const usageRecords = sqliteTable(
+export const usageRecords = pgTable(
   'usage_records',
   {
     id: id(),
     workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
     metric: text('metric').notNull(),
     period: text('period').notNull(),
-    amount: integer('amount').notNull().default(0),
+    amount: bigint('amount', { mode: 'number' }).notNull().default(0),
   },
   (t) => [uniqueIndex('usage_ws_metric_period_uq').on(t.workspaceId, t.metric, t.period)],
 );
 
-export const usageQuotas = sqliteTable('usage_quotas', {
+export const usageQuotas = pgTable('usage_quotas', {
   workspaceId: text('workspace_id')
     .primaryKey()
     .references(() => workspaces.id, { onDelete: 'cascade' }),
@@ -614,18 +616,18 @@ export const usageQuotas = sqliteTable('usage_quotas', {
 });
 
 /** Contador de falhas de login (decisão D3); não usado para limitar tráfego geral. */
-export const rateLimitCounters = sqliteTable(
+export const rateLimitCounters = pgTable(
   'rate_limit_counters',
   {
     key: text('key').primaryKey(),
     count: integer('count').notNull().default(0),
-    windowStart: integer('window_start').notNull(),
-    lockedUntil: integer('locked_until'),
+    windowStart: bigint('window_start', { mode: 'number' }).notNull(),
+    lockedUntil: bigint('locked_until', { mode: 'number' }),
   },
   (t) => [index('rate_limit_window_idx').on(t.windowStart)],
 );
 
-export const auditLogs = sqliteTable(
+export const auditLogs = pgTable(
   'audit_logs',
   {
     id: id(),
@@ -641,26 +643,26 @@ export const auditLogs = sqliteTable(
   (t) => [index('audit_created_idx').on(t.createdAt), index('audit_user_idx').on(t.userId)],
 );
 
-export const userConsents = sqliteTable(
+export const userConsents = pgTable(
   'user_consents',
   {
     id: id(),
     userId: fk('user_id').references(() => users.id, { onDelete: 'cascade' }),
     purpose: text('purpose').notNull(),
     provider: text('provider'),
-    grantedAt: integer('granted_at').notNull(),
-    revokedAt: integer('revoked_at'),
+    grantedAt: bigint('granted_at', { mode: 'number' }).notNull(),
+    revokedAt: bigint('revoked_at', { mode: 'number' }),
   },
   (t) => [index('consents_user_purpose_idx').on(t.userId, t.purpose)],
 );
 
-export const featureFlags = sqliteTable('feature_flags', {
+export const featureFlags = pgTable('feature_flags', {
   key: text('key').primaryKey(),
-  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  enabled: boolean('enabled').notNull().default(false),
   updatedAt: updatedAt(),
 });
 
-export const syncState = sqliteTable('sync_state', {
+export const syncState = pgTable('sync_state', {
   id: id(),
   userId: fk('user_id').references(() => users.id, { onDelete: 'cascade' }),
   deviceId: fk('device_id'),
@@ -668,7 +670,7 @@ export const syncState = sqliteTable('sync_state', {
   updatedAt: updatedAt(),
 });
 
-export const systemSettings = sqliteTable('system_settings', {
+export const systemSettings = pgTable('system_settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
   updatedAt: updatedAt(),

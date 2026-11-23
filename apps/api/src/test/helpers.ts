@@ -1,6 +1,6 @@
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
+import { migrate } from 'drizzle-orm/pglite/migrator';
 import { eq } from 'drizzle-orm';
 import { createApp } from '../app';
 import * as schema from '../db/schema';
@@ -17,7 +17,8 @@ export interface TestEnv {
 export async function createTestEnv(
   opts: { storage?: boolean; config?: Partial<AppConfig> } = {},
 ): Promise<TestEnv> {
-  const client = createClient({ url: 'file::memory:' });
+  // Postgres de verdade (WASM) em memória: mesmas migrations que vão para o Supabase.
+  const client = new PGlite();
   const db = drizzle(client, { schema }) as unknown as Db;
   await migrate(db as unknown as Parameters<typeof migrate>[0], {
     migrationsFolder: new URL('../../migrations', import.meta.url).pathname,

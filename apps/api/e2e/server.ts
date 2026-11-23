@@ -1,15 +1,15 @@
 /**
  * Servidor de desenvolvimento para o teste de fumaça no navegador (apps/web/e2e/smoke.mjs).
- * NÃO é o Worker de produção: roda a mesma API (Hono) em Node, com SQLite em memória
- * (libSQL) e armazenamento em memória exposto em /__storage, no mesmo domínio do front
+ * NÃO é o Worker de produção: roda a mesma API (Hono) em Node, com Postgres em memória
+ * (PGlite) e armazenamento em memória exposto em /__storage, no mesmo domínio do front
  * já compilado (apps/web/dist). Serve só para exercitar o fluxo completo localmente.
  */
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
+import { migrate } from 'drizzle-orm/pglite/migrator';
 import * as schema from '../src/db/schema';
 import { createApp } from '../src/app';
 import { MemoryStorage } from '../src/storage/memory';
@@ -33,7 +33,7 @@ class HttpMemoryStorage extends MemoryStorage {
   }
 }
 
-const client = createClient({ url: 'file::memory:' });
+const client = new PGlite();
 const db = drizzle(client, { schema }) as unknown as Db;
 await migrate(db as unknown as Parameters<typeof migrate>[0], {
   migrationsFolder: join(ROOT, 'apps/api/migrations'),

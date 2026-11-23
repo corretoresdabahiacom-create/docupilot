@@ -22,7 +22,7 @@ export const DOWNLOAD_URL_TTL_SECONDS = 900;
 export const SESSION_TTL_DAYS = 30;
 
 /**
- * Limites do texto extraído (D1 Free: 100 bound params/query, 2 MB/linha, 10 ms CPU/request).
+ * Limites do texto extraído (Worker Free: 10 ms CPU/request; Postgres: texto grande vai em linhas por página).
  * 10 páginas x 6 colunas = 60 parâmetros por INSERT.
  */
 export const MAX_PAGES_PER_REQUEST = 10;

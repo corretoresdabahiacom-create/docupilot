@@ -76,12 +76,22 @@ export function parseSnippet(snippet: string): SnippetPart[] {
   return parts.filter((p) => p.text.length > 0);
 }
 
-/** Converte a consulta do usuário em expressão FTS5 segura: tokens entre aspas, último com prefixo. */
+/** (Legado, só LIKE/FTS5) converte a consulta em expressão FTS5 segura: tokens entre aspas, último com prefixo. */
 export function toFtsQuery(q: string): string | null {
   const tokens = q.normalize('NFC').match(/[\p{L}\p{N}]+/gu);
   if (!tokens || tokens.length === 0) return null;
   const limited = tokens.slice(0, 8);
   return limited.map((t, i) => `"${t}"${i === limited.length - 1 ? '*' : ''}`).join(' ');
+}
+
+/**
+ * Consulta para `to_tsquery('simple', …)` do Postgres: só letras e números (sem operadores do
+ * usuário), unidos por `&`, com prefixo no último termo. O acento e a caixa são tratados no SQL.
+ */
+export function toTsQuery(q: string): string | null {
+  const tokens = extractTokens(q);
+  if (tokens.length === 0) return null;
+  return tokens.map((t, i) => (i === tokens.length - 1 ? `${t}:*` : t)).join(' & ');
 }
 
 export function extractTokens(q: string): string[] {

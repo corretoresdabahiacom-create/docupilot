@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SNIPPET_CLOSE, SNIPPET_OPEN } from '@docupilot/shared';
 import {
@@ -242,9 +241,6 @@ describe('extração e busca (E2E)', () => {
     const d = await newDoc();
     await extract(d, [{ pageNumber: 1, text: 'versão antiga do texto abacaxi' }]);
     await extract(d, [{ pageNumber: 1, text: 'versão nova do texto banana' }]);
-    await env.db.run(
-      sql`INSERT INTO document_pages_fts(document_pages_fts, rank) VALUES ('integrity-check', 1)`,
-    );
     const old = await owner.client.get(`${ws()}/search?q=abacaxi`);
     const fresh = await owner.client.get(`${ws()}/search?q=banana`);
     expect(old.json.results).toEqual([]);
@@ -581,14 +577,7 @@ describe('detalhe, download, renomear/mover e exclusão', () => {
     expect(await env.db.select().from(schema.documentPages)).toHaveLength(0);
     expect(await env.db.select().from(schema.documentHashes)).toHaveLength(0);
     expect((await owner.client.get(`${ws()}/search?q=sumir`)).json.results).toEqual([]);
-    // O índice FTS5 não guarda resíduos: nenhum documento indexado e verificação de integridade.
-    const indexed = await env.db.all<{ n: number }>(
-      sql`SELECT count(*) AS n FROM document_pages_fts_docsize`,
-    );
-    expect(indexed[0]!.n).toBe(0);
-    await env.db.run(
-      sql`INSERT INTO document_pages_fts(document_pages_fts, rank) VALUES ('integrity-check', 1)`,
-    );
+    // O índice é uma coluna gerada da própria linha: sem páginas não há resíduo de busca.
     const w = (
       await env.db
         .select()

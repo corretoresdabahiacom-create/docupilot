@@ -7,12 +7,13 @@ ENVIRONMENT = "production"
 # Origens do front-end autorizadas a chamar a API, separadas por vírgula.
 ALLOWED_ORIGINS = ""
 
-[[d1_databases]]
-binding = "DB"
-database_name = "docupilot"
-# Preencha com o id retornado por `wrangler d1 create docupilot`.
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
-migrations_dir = "migrations"
+# postgres.js precisa de sockets TCP/Buffer do runtime Node.
+compatibility_flags = ["nodejs_compat"]
+
+# Banco: Postgres no Supabase. NÃO há binding: a connection string do POOLER (porta 6543, modo
+# transaction) é um segredo e nunca vai ao repositório:
+#   wrangler secret put DATABASE_URL
+# Sem ela a API responde 503 SERVICE_NOT_CONFIGURED (exceto /health).
 
 # Armazenamento (R2) fica DESLIGADO até o usuário ativar o R2 na própria conta.
 # Depois de ativar, descomente e configure os segredos (nunca no repositório):

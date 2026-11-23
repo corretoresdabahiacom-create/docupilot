@@ -4,7 +4,7 @@
 Navegador (React PWA)
   ├─ extração de texto no cliente (pdfjs-dist, mammoth, OCR opcional com tesseract.js)   [decisão D1]
   ├─ PUT direto no armazenamento (URL assinada)
-  └─ /api/*  ──►  Worker (Hono)  ──►  D1 (Drizzle)
+  └─ /api/*  ──►  Worker (Hono)  ──►  Postgres/Supabase (Drizzle + postgres.js, pooler 6543)
                         └────────►  StorageProvider (R2 | Supabase | não configurado)
 ```
 
@@ -28,7 +28,7 @@ Navegador (React PWA)
 
 1. Após o envio validado, o navegador extrai o texto do arquivo local (PDF: camada de texto; DOCX/TXT/MD/CSV: texto bruto) e o envia em lotes (`PUT .../versions/:id/pages`, até 10 páginas e 150.000 caracteres por lote).
 2. `POST .../extraction/complete` fixa o estado (`extracted`, `needs_ocr` ou `extraction_failed`), grava metadados e conta a extração do mês.
-3. A busca (`GET /workspaces/:id/search`) usa FTS5 sobre a versão atual e devolve documento, página/seção e trecho.
+3. A busca (`GET /workspaces/:id/search`) usa busca textual do Postgres (tsvector 'simple' sem acento, índice GIN) sobre a versão atual e devolve documento, página/seção e trecho.
 4. Pastas (`/folders`, até 5 níveis, 200 por workspace), documentos (renomear, mover, excluir), versões (tornar atual, excluir) e URLs de download assinadas (15 min) completam o CRUD.
 5. A pré-visualização usa pdfjs (PDF), `<img>` (imagem) e texto escapado (demais); nunca HTML do documento.
 

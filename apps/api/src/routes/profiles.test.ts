@@ -161,7 +161,7 @@ describe('criptografia em repouso', () => {
     await grant(a.client);
   });
 
-  it('o D1 não contém o dado em texto puro', async () => {
+  it('o banco não contém o dado em texto puro', async () => {
     await create();
     const row = (await env.db.select().from(schema.personalDataProfiles))[0]!;
     const dump = JSON.stringify(row);

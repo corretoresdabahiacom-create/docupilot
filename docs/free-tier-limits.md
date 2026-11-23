@@ -19,20 +19,18 @@ Itens marcados **[não verificado]** não foram confirmados em fonte oficial e n
 | Cron Triggers por conta            | 5                                                       |
 | Variáveis de ambiente              | 64 por Worker, 5 KB cada                                |
 
-## 2. D1 (plano Free)
+## 2. Banco: Supabase Postgres (substitui o D1, decisão D16)
 
-| Limite                              | Valor                                                                           |
-| ----------------------------------- | ------------------------------------------------------------------------------- |
-| Linhas lidas                        | 5 milhões/dia                                                                   |
-| Linhas escritas                     | 100.000/dia                                                                     |
-| Armazenamento total na conta        | 5 GB                                                                            |
-| Bancos por conta                    | 10                                                                              |
-| Tamanho máximo por banco            | 500 MB                                                                          |
-| Queries por invocação de Worker     | 50                                                                              |
-| Tamanho máximo de linha/string/BLOB | 2 MB                                                                            |
-| Parâmetros por query                | 100                                                                             |
-| Ao exceder                          | queries falham até 00:00 UTC; com 5 GB cheios não insere nem cria tabela/índice |
-| FTS5                                | **[não verificado]**                                                            |
+> **[não verificado nesta sessão]** Os valores abaixo vêm de memória e precisam ser confirmados em https://supabase.com/pricing antes de depender deles. O D1 deixou de ser usado (nunca foi criado).
+
+| Limite (a confirmar)                  | Valor esperado                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------- |
+| Tamanho do banco                      | ~500 MB no plano Free                                                             |
+| Projetos Free por conta               | número pequeno; ver painel                                                        |
+| Inatividade                           | projetos Free podem ser **pausados** após um período sem uso                      |
+| Conexões                              | limitadas; por isso o Worker usa o **pooler** (6543) com 1 conexão por request    |
+| Linhas por query / 50 queries por req | **sem** o teto de 50 queries do D1; o limite passa a ser o CPU de 10 ms do Worker |
+| FTS (tsvector + GIN)                  | nativo do Postgres, sem extensão                                                  |
 
 ## 3. R2
 

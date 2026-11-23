@@ -3,6 +3,7 @@ import {
   detectTextGarbage,
   parseSnippet,
   sanitizeText,
+  toTsQuery,
   SNIPPET_CLOSE,
   SNIPPET_OPEN,
   toFtsQuery,
@@ -51,5 +52,17 @@ describe('snippet e consulta', () => {
   it('toFtsQuery neutraliza operadores', () => {
     expect(toFtsQuery('foo AND "bar" OR * baz:')).toBe('"foo" "AND" "bar" "OR" "baz"*');
     expect(toFtsQuery('***')).toBeNull();
+  });
+});
+
+describe('toTsQuery', () => {
+  it('une termos com & e põe prefixo no último', () => {
+    expect(toTsQuery('valor aluguel')).toBe('valor & aluguel:*');
+  });
+  it('ignora operadores e pontuação do usuário', () => {
+    expect(toTsQuery(`'; drop table -- & | !`)).toBe('drop & table:*');
+  });
+  it('devolve null sem termos', () => {
+    expect(toTsQuery('  !!! ')).toBeNull();
   });
 });

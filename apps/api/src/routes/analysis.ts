@@ -46,8 +46,8 @@ export const analysisRoutes = new Hono<{ Variables: AppVariables }>();
 analysisRoutes.use('*', requireAuth);
 
 const monthPeriod = () => new Date().toISOString().slice(0, 7);
-/** D1 Free: 100 KB por instrução e 50 consultas por invocação. Lotes pequenos via json_each. */
-const JSON_CHUNK = 40;
+/** Lotes de inserção (Postgres aceita até 65.535 parâmetros por instrução; mantemos folga). */
+const JSON_CHUNK = 200;
 const MAX_FINDINGS = 50;
 
 async function loadDocument(db: Db, workspaceId: string, documentId: string) {
@@ -329,33 +329,54 @@ analysisRoutes.post(
     ];
     for (const part of chunk(fieldRows, JSON_CHUNK)) {
       queries.push(
-        db.run(sql`
-        INSERT INTO extracted_fields
-          (id, document_id, workspace_id, field_type, raw_value, normalized_value, label, pattern_id, confidence, source_kind, created_at)
-        SELECT json_extract(j.value, '$.id'), ${doc.id}, ${workspaceId}, json_extract(j.value, '$.t'),
-               json_extract(j.value, '$.r'), json_extract(j.value, '$.n'), json_extract(j.value, '$.l'),
-               json_extract(j.value, '$.p'), json_extract(j.value, '$.c'), json_extract(j.value, '$.k'), ${now}
-        FROM json_each(${JSON.stringify(part)}) AS j`),
+        db.insert(extractedFields).values(
+          part.map((r) => ({
+            id: r.id,
+            documentId: doc.id,
+            workspaceId,
+            fieldType: r.t,
+            rawValue: r.r,
+            normalizedValue: r.n,
+            label: r.l,
+            patternId: r.p,
+            confidence: r.c,
+            sourceKind: r.k,
+            createdAt: now,
+          })),
+        ),
       );
     }
     for (const part of chunk(sourceRows, JSON_CHUNK)) {
       queries.push(
-        db.run(sql`
-        INSERT INTO extraction_sources
-          (id, extracted_field_id, document_id, page_number, text_span_start, text_span_end, snippet, pattern_id, confidence)
-        SELECT json_extract(j.value, '$.id'), json_extract(j.value, '$.f'), ${doc.id}, json_extract(j.value, '$.pg'),
-               json_extract(j.value, '$.a'), json_extract(j.value, '$.b'), json_extract(j.value, '$.sn'),
-               json_extract(j.value, '$.p'), json_extract(j.value, '$.c')
-        FROM json_each(${JSON.stringify(part)}) AS j`),
+        db.insert(extractionSources).values(
+          part.map((r) => ({
+            id: r.id,
+            extractedFieldId: r.f,
+            documentId: doc.id,
+            pageNumber: r.pg,
+            textSpanStart: r.a,
+            textSpanEnd: r.b,
+            snippet: r.sn,
+            patternId: r.p,
+            confidence: r.c,
+          })),
+        ),
       );
     }
     for (const part of chunk(taskRows, JSON_CHUNK)) {
       queries.push(
-        db.run(sql`
-        INSERT INTO document_tasks (id, document_id, workspace_id, kind, status, payload, created_at, updated_at)
-        SELECT json_extract(j.value, '$.id'), ${doc.id}, ${workspaceId}, json_extract(j.value, '$.k'), 'open',
-               json_extract(j.value, '$.p'), ${now}, ${now}
-        FROM json_each(${JSON.stringify(part)}) AS j`),
+        db.insert(documentTasks).values(
+          part.map((r) => ({
+            id: r.id,
+            documentId: doc.id,
+            workspaceId,
+            kind: r.k,
+            status: 'open',
+            payload: r.p,
+            createdAt: now,
+            updatedAt: now,
+          })),
+        ),
       );
     }
     queries.push(

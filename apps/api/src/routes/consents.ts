@@ -12,7 +12,7 @@ consentRoutes.use('*', requireAuth);
 
 const PROVIDERS: Record<string, string> = {
   browser_ocr: 'tesseract.js (navegador)',
-  pii_profile: 'DocuPilot (D1, criptografado)',
+  pii_profile: 'DocuPilot (banco Postgres, criptografado)',
 };
 
 export async function hasActiveConsent(db: Db, userId: string, purpose: string): Promise<boolean> {

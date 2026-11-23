@@ -1,13 +1,14 @@
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
+import type { PgDatabase } from 'drizzle-orm/pg-core';
 import type { Role } from '@docupilot/shared';
 import type * as schema from './db/schema';
 import type { StorageProvider } from './storage/types';
 
-export type Db = BaseSQLiteDatabase<'async', any, typeof schema>;
+export type Db = PgDatabase<any, typeof schema>;
 
 /** Bindings e segredos do Worker. Tudo opcional é "não configurado" (R4). */
 export interface Env {
-  DB: D1Database;
+  /** Connection string do Postgres (Supabase, pooler porta 6543). Segredo: `wrangler secret put DATABASE_URL`. */
+  DATABASE_URL?: string;
   STORAGE_BUCKET?: R2Bucket;
   R2_ACCOUNT_ID?: string;
   R2_ACCESS_KEY_ID?: string;
@@ -34,6 +35,8 @@ export interface AppConfig {
   piiKey?: string;
   /** Só testes: reduz os limites do motor de workflow (timeout/retry). */
   workflowLimits?: { stepTimeoutMs?: number; totalTimeoutMs?: number; maxRetries?: number };
+  /** `false` quando o Worker está sem `DATABASE_URL` (R4). Ausente nos testes = configurado. */
+  databaseConfigured?: boolean;
   pbkdf2Iterations: number;
   fetchImpl?: typeof fetch;
 }

@@ -1,9 +1,10 @@
-import { drizzle } from 'drizzle-orm/d1';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import { MAX_ITERATIONS } from './auth/password';
 import { createApp } from './app';
 import * as schema from './db/schema';
 import { createStorage } from './storage';
-import type { AppConfig, Env } from './types';
+import type { AppConfig, AppDeps, Env } from './types';
 
 function buildConfig(env: Env): AppConfig {
   const iterations = Number(env.PBKDF2_ITERATIONS ?? MAX_ITERATIONS);
@@ -15,17 +16,30 @@ function buildConfig(env: Env): AppConfig {
       .filter(Boolean),
     turnstileSecret: env.TURNSTILE_SECRET,
     piiKey: env.PII_ENCRYPTION_KEY,
+    databaseConfigured: Boolean(env.DATABASE_URL),
     pbkdf2Iterations: Number.isFinite(iterations) && iterations > 0 ? iterations : MAX_ITERATIONS,
   };
 }
 
 export default {
-  fetch(request: Request, env: Env, ctx: ExecutionContext): Response | Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const config = buildConfig(env);
+    // Sem DATABASE_URL a API não finge funcionar (R4): `createApp` responde 503 nas rotas que
+    // dependem do banco e `/health` informa `database.configured=false`.
+    // Uma conexão por requisição: o Worker não reaproveita sockets entre requisições. O pooler do
+    // Supabase (modo transação, porta 6543) não aceita prepared statements.
+    const client = env.DATABASE_URL
+      ? postgres(env.DATABASE_URL, { max: 1, prepare: false, fetch_types: false, idle_timeout: 5 })
+      : null;
     const app = createApp({
-      db: drizzle(env.DB, { schema }),
+      db: (client ? drizzle(client, { schema }) : null) as unknown as AppDeps['db'],
       storage: createStorage(env),
-      config: buildConfig(env),
+      config,
     });
-    return app.fetch(request, env, ctx);
+    try {
+      return await app.fetch(request, env, ctx);
+    } finally {
+      if (client) ctx.waitUntil(client.end({ timeout: 2 }));
+    }
   },
 } satisfies ExportedHandler<Env>;

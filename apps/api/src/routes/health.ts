@@ -8,9 +8,11 @@ export const healthRoutes = new Hono<{ Variables: AppVariables }>();
 /** Estado real dos serviços (R4): nada é apresentado como operacional se não estiver configurado. */
 healthRoutes.get('/health', async (c) => {
   const { db, storage, config } = c.get('deps');
-  const flags = await db.select().from(featureFlags);
+  const dbOk = config.databaseConfigured !== false;
+  const flags = dbOk ? await db.select().from(featureFlags) : [];
   return c.json({
-    status: 'ok',
+    status: dbOk ? 'ok' : 'degraded',
+    database: { configured: dbOk, provider: 'postgres' },
     storage: { configured: storage !== null, provider: storage?.name ?? null },
     turnstile: { configured: Boolean(config.turnstileSecret) },
     pii: { configured: isPiiKeyValid(config.piiKey) },

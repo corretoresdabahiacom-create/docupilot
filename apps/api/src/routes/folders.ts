@@ -158,7 +158,7 @@ folderRoutes.patch(
     ];
     const descendants = ids.filter((id) => id !== folder.id);
     if (delta !== 0) {
-      // D1 aceita no máximo 100 parâmetros por query: atualiza em blocos.
+      // Postgres limita a 65.535 parâmetros por query; mantemos blocos pequenos.
       for (let i = 0; i < descendants.length; i += 80) {
         queries.push(
           db

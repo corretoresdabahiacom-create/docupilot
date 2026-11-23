@@ -148,3 +148,12 @@ O PDF **não passa pelo servidor** no preenchimento: o navegador baixa a versão
 - **Aprovação**: a execução pausa (`awaiting_approval`). Em workspace pessoal (1 membro) o próprio usuário decide em **duas etapas** (janela de confirmação + caixa "entendo que não pode ser desfeita"; o servidor exige `confirm:true` para aprovar). Em equipe, **quem iniciou não aprova a própria execução** e só papéis com a permissão `approve` decidem. Cada decisão vai para `approvals` (`subjectType='workflow_execution'`) e para a auditoria; a "reivindicação" da execução usa `UPDATE` condicional (a segunda decisão recebe 409). Cancelar só vale enquanto aguarda aprovação.
 - **Notificações** só dentro do app (`notifications`, sem Web Push nem e-mail): aprovadores recebem "aprovação pendente"; quem iniciou recebe o fim (concluído, falhou, tempo esgotado, rejeitado, cancelado).
 - **Isolamento**: entradas precisam ser documentos do mesmo workspace (404 caso contrário); definições e execuções de outro workspace dão 404.
+
+## D16 — Banco de dados: Supabase Postgres (substitui o D1)
+
+- **Decisão (usuário, 2026-11-23):** migrar o banco para o Supabase, com driver Postgres direto (Drizzle + `postgres.js` pelo pooler, porta 6543, sem Hyperdrive). O projeto Supabase será criado pelo usuário com **outro e-mail**; esta sessão não cria projeto nem toca nos projetos existentes da conta conectada.
+- **Por quê:** remove o teto de 50 queries/invocação e de 100 parâmetros do D1; FTS nativo; lotes transacionais reais.
+- **Como:** schema em `pgTable` (datas seguem em epoch ms, `bigint mode:number`); `runBatch` agora é `db.transaction` com replay de `toSQL()`; busca com `tsvector` 'simple' + `f_unaccent` (IMMUTABLE, `translate`, sem extensão) em coluna gerada com índice GIN; RLS ligado em todas as tabelas, sem policies; sem `DATABASE_URL` a API responde 503 (R4).
+- **Conexão no Worker:** 1 cliente por request (`max:1`, `prepare:false`, `fetch_types:false`), encerrado com `ctx.waitUntil`; exige `nodejs_compat`.
+- **Não verificado:** postgres.js e CPU de 10 ms em Worker real; pooler do Supabase; migrações aplicadas no Supabase.
+- **Supera** a escolha do D1 das decisões anteriores.

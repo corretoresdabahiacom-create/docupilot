@@ -37,10 +37,13 @@ importers:
         version: 1.0.20
       drizzle-orm:
         specifier: ^0.45.4
-        version: 0.45.4(@cloudflare/workers-types@5.20261109.1)(@libsql/client@0.18.0)
+        version: 0.45.4(@cloudflare/workers-types@5.20261109.1)(@electric-sql/pglite@0.6.0)(@libsql/client@0.18.0)(postgres@4.1.1)
       hono:
         specifier: ^4.13.17
         version: 4.13.17
+      postgres:
+        specifier: ^4.1.1
+        version: 4.1.1
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -48,9 +51,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20261109.1
         version: 5.20261109.1
-      '@libsql/client':
-        specifier: ^0.18.0
-        version: 0.18.0
+      '@electric-sql/pglite':
+        specifier: ^0.6.0
+        version: 0.6.0
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -750,6 +753,9 @@ packages:
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
+
+  '@electric-sql/pglite@0.6.0':
+    resolution: {integrity: sha512-g3tAPFjRLEdN1g5FvawTl4ETo9LtmVwBRUJYnH6Erl6mhlKFRGB2mYhPABffIuXMYxki64mX0Al8U4UFUhuYDQ==}
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
@@ -3521,6 +3527,10 @@ packages:
     resolution: {integrity: sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postgres@4.1.1:
+    resolution: {integrity: sha512-1kJDojqNZC+iTHHXh6eif0J98LUtyLAePe/qkW1GK35eh2JixlsAiIKq3FGI+xqI+SUGTNodzf7TScVeIIyUug==}
+    engines: {node: '>=18'}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -5045,6 +5055,8 @@ snapshots:
 
   '@drizzle-team/brocli@0.10.2': {}
 
+  '@electric-sql/pglite@0.6.0': {}
+
   '@emnapi/runtime@1.11.3':
     dependencies:
       tslib: 2.9.1
@@ -5489,10 +5501,12 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@libsql/core@0.18.0':
     dependencies:
       js-base64: 3.9.6
+    optional: true
 
   '@libsql/darwin-arm64@0.5.29':
     optional: true
@@ -5507,6 +5521,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@libsql/isomorphic-ws@0.1.5':
     dependencies:
@@ -5515,6 +5530,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@libsql/linux-arm-gnueabihf@0.5.29':
     optional: true
@@ -5585,7 +5601,8 @@ snapshots:
       '@napi-rs/canvas-win32-x64-msvc': 1.1.0
     optional: true
 
-  '@neon-rs/load@0.0.4': {}
+  '@neon-rs/load@0.0.4':
+    optional: true
 
   '@oxc-project/types@0.156.0': {}
 
@@ -6130,6 +6147,7 @@ snapshots:
   '@types/ws@8.18.2':
     dependencies:
       '@types/node': 26.6.6
+    optional: true
 
   '@typescript-eslint/eslint-plugin@8.72.1(@typescript-eslint/parser@8.72.1(eslint@10.14.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.14.0(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
@@ -6477,7 +6495,8 @@ snapshots:
 
   dequal@2.0.3: {}
 
-  detect-libc@2.0.2: {}
+  detect-libc@2.0.2:
+    optional: true
 
   detect-libc@2.1.2: {}
 
@@ -6502,10 +6521,12 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.23.15
 
-  drizzle-orm@0.45.4(@cloudflare/workers-types@5.20261109.1)(@libsql/client@0.18.0):
+  drizzle-orm@0.45.4(@cloudflare/workers-types@5.20261109.1)(@electric-sql/pglite@0.6.0)(@libsql/client@0.18.0)(postgres@4.1.1):
     optionalDependencies:
       '@cloudflare/workers-types': 5.20261109.1
+      '@electric-sql/pglite': 0.6.0
       '@libsql/client': 0.18.0
+      postgres: 4.1.1
 
   duck@0.1.12:
     dependencies:
@@ -7126,7 +7147,8 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  js-base64@3.9.6: {}
+  js-base64@3.9.6:
+    optional: true
 
   js-tokens@4.0.0: {}
 
@@ -7207,6 +7229,7 @@ snapshots:
       '@libsql/linux-x64-gnu': 0.5.29
       '@libsql/linux-x64-musl': 0.5.29
       '@libsql/win32-x64-msvc': 0.5.29
+    optional: true
 
   lie@3.3.0:
     dependencies:
@@ -7453,6 +7476,8 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
+  postgres@4.1.1: {}
+
   prelude-ls@1.2.1: {}
 
   prettier@3.9.10: {}
@@ -7469,7 +7494,8 @@ snapshots:
 
   process-nextick-args@2.0.1: {}
 
-  promise-limit@2.7.0: {}
+  promise-limit@2.7.0:
+    optional: true
 
   prosemirror-changeset@2.4.6:
     dependencies:
@@ -8396,7 +8422,8 @@ snapshots:
 
   ws@8.21.0: {}
 
-  ws@8.22.2: {}
+  ws@8.22.2:
+    optional: true
 
   xml-name-validator@5.0.0: {}
 

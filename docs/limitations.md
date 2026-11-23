@@ -1,11 +1,11 @@
 # Limitações atuais (Fase 5)
 
 - **Geração de documentos e automação, empresas e administração** ainda não existem (Fases 6 a 8).
-- **Nada foi validado em Cloudflare real** (D1, R2, Workers, CPU de 10 ms, custo de escritas do FTS5). Os testes rodam em libSQL local com armazenamento em memória.
+- **Nada foi validado em Cloudflare real** (Supabase, R2, Workers, CPU de 10 ms, TLS do postgres.js no Worker). Os testes rodam em Postgres embutido (PGlite) com armazenamento em memória.
 - **Texto**: DOCX mostra só texto (sem layout, tabelas ou imagens). PDFs com mais de 300 páginas, ou com uma página de mais de 30.000 caracteres, não são extraídos.
 - **PDF com texto ilegível** vira `extraction_failed` e não oferece OCR (decisão do briefing); só `needs_ocr` abre o OCR.
 - **OCR** é experimental: só desktop, 10 páginas por execução, imagens até 5 MB, qualidade variável, e depende do jsDelivr (ou de cópia própria). **Não foi executado** neste ambiente; só a lógica de proteção e envio foi testada.
-- **Busca**: FTS5 ignora acentos; a alternativa em LIKE não. Só pesquisa a versão atual e documentos com texto extraído.
+- **Busca**: A busca textual (tsvector 'simple') ignora acentos só de Latin-1/Latin Extended-A e não faz stemming; a alternativa em LIKE não ignora acentos. Só pesquisa a versão atual e documentos com texto extraído.
 - **Versões**: metadados de extração são por documento, não por versão.
 - **Objetos órfãos** podem sobrar se a limpeza no armazenamento falhar; não há faxina automática ainda.
 - **Armazenamento**: exige que você ative o R2 ou o plano B (Supabase Storage, implementado mas **não testado contra um projeto real**; ver `docs/env-vars.md`) e configure o CORS; sem isso o envio fica desabilitado. No plano gratuito do Supabase o espaço é 1 GB no total, somando todos os workspaces.
@@ -24,7 +24,7 @@
 - **Campo obrigatório vazio (AcroForm)** e **SimHash** são calculados no navegador; o servidor não consegue refazê-los. O leitor de AcroForm com pdf.js **não foi testado com um PDF real**.
 - **Resumo** é extrativo (frases originais); sem IA externa não há resumo por cláusulas ou obrigações, nem perguntas em linguagem natural.
 - **Idioma**: detector próprio (pt/en/es), sem `franc`; textos curtos resultam em `und`.
-- **Escrita em lote com `json_each`** não foi validada em D1 real.
+- **Lotes atômicos** (`runBatch`) usam `db.transaction` + `toSQL()`; validado em PGlite, não no Supabase real.
 - **Quotas**: inclui 300 análises/mês.
 
 ## Fase 4 (comparação)
@@ -60,5 +60,7 @@
 - **Workflows**: lineares, até 10 passos, sem edição na interface (para mudar, crie outro e exclua o antigo; a API tem `PUT`). `compare` no servidor é **só de campos extraídos** (resumo), não de texto ou cláusulas. Só lê análises já feitas: sem análise atualizada o passo falha, nunca inventa dados. O tempo de 5 min e os 30 s por passo valem para o **tempo ativo**; a espera por aprovação não tem prazo (execuções pendentes só saem por decisão ou cancelamento).
 - **Retry** só cobre falha transitória (erro do banco, tempo do passo); como todos os passos são locais e rápidos, na prática raramente dispara. É coberto por testes do motor com executores simulados.
 - **Aprovação em equipe**: vale a permissão `approve` do papel; o bloqueio de "quem iniciou" compara usuários, então um dono que inicia a execução não pode aprová-la, mas outro membro com a permissão pode.
-- **Não testado no Cloudflare real**: o orçamento de 50 consultas ao D1 por invocação e os 10 ms de CPU nas rotas de workflow e de documentos criados; a validação de documentos grandes pode ser cara em CPU. Tiptap, `docx` e `pdf-lib` foram testados em jsdom e em Chromium contra a API em Node, **não** em navegadores diversos nem em celulares reais.
+- **Não testado no Cloudflare real**: os 10 ms de CPU e o handshake TLS do postgres.js nas rotas de workflow e de documentos criados; a validação de documentos grandes pode ser cara em CPU. Tiptap, `docx` e `pdf-lib` foram testados em jsdom e em Chromium contra a API em Node, **não** em navegadores diversos nem em celulares reais.
 - O teste de fumaça em Chromium agora tem 45 verificações.
+
+- **Migração para Supabase (D16)**: o projeto Supabase ainda **não existe** (será criado pelo usuário com outro e-mail) e as migrações `0000`/`0001` **nunca foram aplicadas** a um Postgres real do Supabase; só ao PGlite. Não há dados a migrar (o D1 nunca foi criado).

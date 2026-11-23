@@ -1,11 +1,12 @@
 import { sql } from 'drizzle-orm';
+import { queryRows } from '../db/raw';
 import { Hono } from 'hono';
 import {
   extractTokens,
   searchQuerySchema,
   SNIPPET_CLOSE,
   SNIPPET_OPEN,
-  toFtsQuery,
+  toTsQuery,
 } from '@docupilot/shared';
 import { AppError } from '../errors';
 import { requireAuth } from '../middleware/auth';
@@ -53,53 +54,94 @@ function folderClause(folderId?: string, documentId?: string) {
   return parts.length ? sql.join(parts, sql` `) : sql``;
 }
 
-/** FTS5 (bm25 + snippet). Só páginas da versão atual de cada documento. */
+/**
+ * Busca textual do Postgres (`text_search` = tsvector 'simple' sobre o texto sem acento e em
+ * minúsculas, migração 0001). Só páginas da versão atual de cada documento. O trecho destacado é
+ * montado aqui (JS) para marcar o termo mesmo quando o texto original tem acento.
+ */
 export async function searchFts(db: Db, p: Params): Promise<SearchHit[]> {
-  const match = toFtsQuery(p.q);
+  const match = toTsQuery(p.q);
   if (!match) return [];
-  const rows = await db.all<Row>(sql`
+  const tokens = extractTokens(p.q);
+  const rows = await queryRows<Row>(
+    db,
+    sql`
     SELECT p.document_id AS document_id, d.name AS document_name, d.folder_id AS folder_id,
-           p.page_number AS page_number, dm.page_kind AS page_kind,
-           snippet(document_pages_fts, 0, char(1), char(2), '…', 16) AS snippet
-    FROM document_pages_fts
-    JOIN document_pages p ON p.id = document_pages_fts.rowid
+           p.page_number AS page_number, dm.page_kind AS page_kind, p.text AS text
+    FROM document_pages p
     JOIN documents d ON d.id = p.document_id AND d.current_version_id = p.version_id
     LEFT JOIN document_metadata dm ON dm.document_id = d.id
-    WHERE document_pages_fts MATCH ${match} AND p.workspace_id = ${p.workspaceId}
+    WHERE p.workspace_id = ${p.workspaceId}
+      AND p.text_search @@ to_tsquery('simple', f_unaccent(lower(${match})))
       ${folderClause(p.folderId, p.documentId)}
-    ORDER BY bm25(document_pages_fts), d.name, p.page_number
-    LIMIT ${p.limit} OFFSET ${p.offset}`);
-  return rows.map(toHit);
+    ORDER BY ts_rank(p.text_search, to_tsquery('simple', f_unaccent(lower(${match})))) DESC,
+             d.name, p.page_number
+    LIMIT ${p.limit} OFFSET ${p.offset}`,
+  );
+  return rows.map((r) => toHit({ ...r, snippet: buildSnippet(r.text ?? '', tokens) }));
 }
 
 function escapeLike(s: string): string {
   return s.replace(/[\\%_]/g, (m) => `\\${m}`);
 }
 
+/** Minúsculas e sem acento, mantendo o comprimento (cada caractere vira o caractere-base). */
+function fold(s: string): string {
+  let out = '';
+  for (const ch of s) {
+    const base = ch.normalize('NFD')[0] ?? ch;
+    out += base.toLocaleLowerCase().length === 1 ? base.toLocaleLowerCase() : base;
+  }
+  return out;
+}
+
+const WORD_CHAR = /[\p{L}\p{N}]/u;
+
 /** Trecho de ~120 caracteres ao redor da primeira ocorrência, com os termos marcados. */
 export function buildSnippet(text: string, tokens: string[]): string {
-  const lower = text.toLocaleLowerCase();
+  const lower = fold(text);
   let first = -1;
   for (const t of tokens) {
-    const i = lower.indexOf(t.toLocaleLowerCase());
+    const i = lower.indexOf(fold(t));
     if (i !== -1 && (first === -1 || i < first)) first = i;
   }
   const start = Math.max(0, (first === -1 ? 0 : first) - 50);
   const end = Math.min(text.length, start + 140);
   let out = text.slice(start, end).replace(/\s+/g, ' ');
+  // Marca por posição no texto sem acento (mesmo tamanho do original), preservando o original.
+  const folded = fold(out);
+  const marks: Array<[number, number]> = [];
   for (const t of tokens) {
-    const re = new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
-    out = out.replace(re, (m) => `${SNIPPET_OPEN}${m}${SNIPPET_CLOSE}`);
+    const ft = fold(t);
+    if (!ft) continue;
+    for (let i = folded.indexOf(ft); i !== -1; i = folded.indexOf(ft, i + ft.length)) {
+      // Só início de palavra (a busca é por prefixo) e marca a palavra inteira.
+      if (i > 0 && WORD_CHAR.test(folded[i - 1] ?? '')) continue;
+      let e = i + ft.length;
+      while (e < folded.length && WORD_CHAR.test(folded[e] ?? '')) e++;
+      marks.push([i, e]);
+    }
   }
+  marks.sort((x, y) => x[0] - y[0]);
+  let result = '';
+  let cursor = 0;
+  for (const [a, b] of marks) {
+    if (a < cursor) continue;
+    result += `${out.slice(cursor, a)}${SNIPPET_OPEN}${out.slice(a, b)}${SNIPPET_CLOSE}`;
+    cursor = b;
+  }
+  out = result + out.slice(cursor);
   return `${start > 0 ? '…' : ''}${out}${end < text.length ? '…' : ''}`;
 }
 
-/** Alternativa sem FTS5 (LIKE). Não ignora acentos e é mais lenta. */
+/** Alternativa sem o índice de texto (LIKE). Não ignora acentos e é mais lenta. */
 export async function searchLike(db: Db, p: Params): Promise<SearchHit[]> {
   const tokens = extractTokens(p.q);
   if (tokens.length === 0) return [];
   const conds = tokens.map((t) => sql`p.text LIKE ${`%${escapeLike(t)}%`} ESCAPE '\\'`);
-  const rows = await db.all<Row>(sql`
+  const rows = await queryRows<Row>(
+    db,
+    sql`
     SELECT p.document_id AS document_id, d.name AS document_name, d.folder_id AS folder_id,
            p.page_number AS page_number, dm.page_kind AS page_kind, p.text AS text
     FROM document_pages p
@@ -108,7 +150,8 @@ export async function searchLike(db: Db, p: Params): Promise<SearchHit[]> {
     WHERE p.workspace_id = ${p.workspaceId} AND ${sql.join(conds, sql` AND `)}
       ${folderClause(p.folderId, p.documentId)}
     ORDER BY d.name, p.page_number
-    LIMIT ${p.limit} OFFSET ${p.offset}`);
+    LIMIT ${p.limit} OFFSET ${p.offset}`,
+  );
   return rows.map((r) => toHit({ ...r, snippet: buildSnippet(r.text ?? '', tokens) }));
 }
 
@@ -125,7 +168,7 @@ function toHit(r: Row): SearchHit {
 
 searchRoutes.get('/:workspaceId/search', requireWorkspacePermission('read'), async (c) => {
   const parsed = searchQuerySchema.safeParse(c.req.query());
-  if (!parsed.success || !toFtsQuery(parsed.data.q)) {
+  if (!parsed.success || !toTsQuery(parsed.data.q)) {
     throw new AppError('VALIDATION_ERROR', 400, 'Consulta de busca inválida.');
   }
   const { db } = c.get('deps');
@@ -140,9 +183,9 @@ searchRoutes.get('/:workspaceId/search', requireWorkspacePermission('read'), asy
   try {
     hits = await searchFts(db, params);
   } catch (err) {
-    // Só cai para LIKE quando o FTS5 não existe no banco; outros erros sobem.
+    // Só cai para LIKE quando a coluna/função de busca não existe no banco; outros erros sobem.
     const msg = err instanceof Error ? `${err.message} ${String(err.cause ?? '')}` : '';
-    if (!/no such (table|module)|fts5/i.test(msg)) throw err;
+    if (!/text_search|f_unaccent|does not exist/i.test(msg)) throw err;
     mode = 'like';
     hits = await searchLike(db, params);
   }
