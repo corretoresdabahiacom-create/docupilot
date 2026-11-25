@@ -2,7 +2,7 @@
 
 Plataforma multi-tenant para organizar, extrair, comparar, preencher e gerar documentos, com rastreabilidade de origem e revisão humana. **Sem IA generativa por padrão**: o que é extração determinística, heurística ou IA é sempre declarado.
 
-> Estado: **Fase 6 (criação e automação)** concluída, aguardando aprovação. As Fases 2, 3, 4 e 5 seguem com aprovação formal pendente. Siga as fases em ordem; cada uma termina com aprovação.
+> Estado: **Fase 7 (empresas)** concluída, aguardando aprovação. As Fases 2 a 6 seguem com aprovação formal pendente. Siga as fases em ordem; cada uma termina com aprovação.
 
 ## Estrutura
 
@@ -35,6 +35,15 @@ Teste de fumaça no navegador (Chromium): compile o front, suba `apps/api/e2e/se
 ## Princípios
 
 Custo zero, sem cartão. Nada é apresentado como operacional se não estiver configurado. Nunca inventar dado extraído. Nenhum parecer jurídico, contábil, médico ou fiscal. Nenhum documento enviado a terceiros sem consentimento registrado.
+
+## Fase 7 (empresas)
+
+- **Empresa**: `POST /organizations` cria a empresa e um workspace compartilhado (você é o proprietário). Telas em **Equipe** (`/team`); o seletor do topo troca de workspace (o pessoal vem primeiro).
+- **Convites por link** (sem e-mail transacional): o papel e a validade (1 h a 30 dias) são definidos por quem convida; o token é aleatório, só o hash fica no banco, aparece **uma única vez**, vale **um único aceite** e pode ser revogado. Quem recebe vê só uma prévia (nomes e papel) em `/convite/:token`, entra ou cria conta e aceita.
+- **Papéis**: matriz do briefing §4. Quem tem `manage_members` só concede/altera papéis abaixo do seu; ninguém concede `owner`; ninguém altera o próprio papel.
+- **Pastas compartilhadas**: uma pasta pode ser **restrita** (vale para as subpastas). Só proprietário, administrador, gerente e membros com concessão (`view` ou `edit`) a veem; o papel do workspace continua limitando (um leitor com `edit` não edita).
+- **Cota por membro**: bytes enviados por cada membro em workspace de empresa (padrão 256 MB; o administrador ajusta por membro).
+- **Histórico por workspace**: eventos de auditoria (quem, o quê, quando; nunca conteúdo), visível a proprietário, administrador e gerente.
 
 ## Fase 6 (criação e automação)
 

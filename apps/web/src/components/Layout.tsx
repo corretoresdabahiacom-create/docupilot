@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router';
 import { LOCALES, setLocale } from '../i18n';
 import { api } from '../lib/api';
 import { useNotifications } from '../lib/creation';
+import { setActiveWorkspaceId, useActiveWorkspace, useMe } from '../lib/queries';
 import { applyTheme, getThemePref, type ThemePref } from '../lib/theme';
 import { Banner, Button } from './ui';
 
@@ -30,6 +31,9 @@ export function Layout({ children, signedIn }: { children: ReactNode; signedIn: 
   const qc = useQueryClient();
   const unread = useNotifications(signedIn).data?.unread ?? 0;
   const navigate = useNavigate();
+  const me = useMe();
+  const active = useActiveWorkspace();
+  const workspaces = me.data?.workspaces ?? [];
 
   const logout = async () => {
     await api('/auth/logout', { method: 'POST' }).catch(() => undefined);
@@ -76,8 +80,31 @@ export function Layout({ children, signedIn }: { children: ReactNode; signedIn: 
               </option>
             ))}
           </select>
+          {signedIn && workspaces.length > 1 && (
+            <>
+              <label className="sr-only" htmlFor="workspace">
+                {t('workspace.label')}
+              </label>
+              <select
+                id="workspace"
+                value={active?.id ?? ''}
+                onChange={(e) => {
+                  setActiveWorkspaceId(e.target.value);
+                  qc.removeQueries({ queryKey: ['documents'] });
+                  navigate('/');
+                }}
+                className="min-h-11 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-sm"
+              >
+                {workspaces.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.isPersonal ? t('workspace.personal') : w.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
           {signedIn &&
-            (['create', 'workflows'] as const).map((k) => (
+            (['create', 'workflows', 'team'] as const).map((k) => (
               <Link
                 key={k}
                 to={`/${k}`}

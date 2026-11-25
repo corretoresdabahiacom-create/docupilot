@@ -15,6 +15,13 @@
       "when": 1795465381835,
       "tag": "0001_search_seed_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795608001887,
+      "tag": "0002_phase7_teams",
+      "breakpoints": true
     }
   ]
 }

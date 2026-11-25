@@ -11,7 +11,8 @@
     "profiles": "Data profiles",
     "create": "Create documents",
     "workflows": "Workflows",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "team": "Team"
   },
   "auth": {
     "email": "Email",
@@ -631,5 +632,97 @@
       "workflow_rejected": "Workflow rejected: {{name}}",
       "workflow_cancelled": "Workflow cancelled: {{name}}"
     }
+  },
+  "workspace": {
+    "label": "Active workspace",
+    "personal": "Personal"
+  },
+  "team": {
+    "title": "Team",
+    "personalNotice": "The personal workspace has no team. Create a company below or switch workspace using the selector at the top.",
+    "current": "Workspace “{{name}}” — your role: {{role}}.",
+    "members": "Members",
+    "you": "you",
+    "role": "Role",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "manager": "Manager",
+      "approver": "Approver",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "remove": "Remove",
+    "leave": "Leave workspace",
+    "confirmRemove": "Remove {{name}} from this workspace?",
+    "confirmLeave": "Leave this workspace? You will lose access to its documents.",
+    "usage": "Used: {{used}} of {{quota}}",
+    "defaultQuota": "default quota",
+    "quotaMb": "Quota (MB)",
+    "resetQuota": "Use the default quota",
+    "invites": "Invite links",
+    "inviteHint": "Generate a link and send it to the person yourself (we do not send email). The link works once and expires.",
+    "expiresHours": "Valid for (hours)",
+    "createLink": "Generate link",
+    "linkOnce": "Copy it now: for security, this link will not be shown again.",
+    "link": "Invite link",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "revoke": "Revoke",
+    "inviteStatus": {
+      "pending": "pending",
+      "used": "used",
+      "expired": "expired"
+    },
+    "activity": "Workspace history",
+    "activityHint": "Action metadata only (who, what, when); never document content.",
+    "activityEmpty": "Nothing recorded yet.",
+    "system": "System",
+    "actions": {
+      "organization.created": "created the company",
+      "workspace.created": "created the workspace",
+      "invite.created": "generated an invite",
+      "invite.accepted": "accepted an invite",
+      "invite.revoked": "revoked an invite",
+      "member.updated": "changed a member",
+      "member.removed": "removed a member",
+      "member.left": "left the workspace",
+      "folder.created": "created a folder",
+      "folder.updated": "changed a folder",
+      "folder.restricted": "restricted a folder",
+      "folder.unrestricted": "opened up a folder",
+      "folder.access_granted": "granted folder access",
+      "folder.access_revoked": "revoked folder access",
+      "document.updated": "changed a document",
+      "auth.register": "created the account"
+    },
+    "createCompany": "Create company",
+    "createCompanyHint": "Creates a company with a shared workspace in which you are the owner.",
+    "companyName": "Company name",
+    "create": "Create"
+  },
+  "invite": {
+    "title": "Invitation",
+    "invalid": "This invitation is not valid: it may have expired, been used or been revoked.",
+    "home": "Go to the start page",
+    "summary": "You were invited to the workspace “{{workspace}}” of the company “{{org}}” as {{role}}.",
+    "expires": "Valid until {{date}}.",
+    "accept": "Accept invitation",
+    "needLogin": "Sign in or create an account to accept the invitation."
+  },
+  "folderAccess": {
+    "open": "Access",
+    "restrict": "Restrict this folder",
+    "restrictedHint": "Only owner, admin, manager and the members below see this folder and its subfolders.",
+    "openHint": "All workspace members see this folder.",
+    "noGrants": "No members with extra access.",
+    "member": "Member",
+    "level": "Level",
+    "view": "View only",
+    "edit": "View and edit",
+    "grant": "Grant",
+    "revoke": "Remove",
+    "badge": "restricted",
+    "viewOnly": "view only"
   }
 }

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSyncExternalStore } from 'react';
 import {
   api,
   type AnalysisResponse,
@@ -7,12 +8,51 @@ import {
   type FolderRow,
   type Health,
   type Me,
+  type WorkspaceSummary,
   type ProfileMeta,
   type SearchHit,
 } from './api';
 
 export const useMe = () =>
   useQuery({ queryKey: ['me'], queryFn: () => api<Me>('/auth/me'), retry: false });
+// ---------- workspace ativo (Fase 7: o usuário pode ter pessoal + empresas) ----------
+
+const ACTIVE_KEY = 'docupilot.workspace';
+const listeners = new Set<() => void>();
+let activeId: string | null = readActive();
+
+function readActive(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setActiveWorkspaceId(id: string): void {
+  activeId = id;
+  try {
+    localStorage.setItem(ACTIVE_KEY, id);
+  } catch {
+    /* sem armazenamento: vale só nesta aba */
+  }
+  listeners.forEach((l) => l());
+}
+
+/** Workspace escolhido pelo usuário; sem escolha válida, o primeiro (o pessoal vem antes). */
+export function useActiveWorkspace(): WorkspaceSummary | undefined {
+  const me = useMe();
+  const id = useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => activeId,
+  );
+  const list = me.data?.workspaces ?? [];
+  return list.find((w) => w.id === id) ?? list[0];
+}
+
 export const useHealth = () =>
   useQuery({ queryKey: ['health'], queryFn: () => api<Health>('/health'), retry: false });
 

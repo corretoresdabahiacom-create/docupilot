@@ -29,6 +29,7 @@ import {
   workflowSteps,
   workspaceMembers,
 } from '../db/schema';
+import { assertFolderAccess } from '../access';
 import { AppError, forbidden, notFound } from '../errors';
 import { auditEntry, parseBody } from '../http';
 import { requireAuth } from '../middleware/auth';
@@ -356,11 +357,12 @@ workflowRoutes.post(
     for (const [n, id] of Object.entries(inputs)) {
       const found = (
         await db
-          .select({ id: documents.id })
+          .select({ id: documents.id, folderId: documents.folderId })
           .from(documents)
           .where(and(eq(documents.id, id), eq(documents.workspaceId, workspaceId)))
           .limit(1)
       )[0];
+      if (found) await assertFolderAccess(c, found.folderId, 'read');
       if (!found)
         throw new AppError('NOT_FOUND', 404, `Documento da entrada "${n}" não encontrado.`);
     }

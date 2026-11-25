@@ -1,5 +1,6 @@
 import type { PgDatabase } from 'drizzle-orm/pg-core';
-import type { Role } from '@docupilot/shared';
+import type { Permission, Role } from '@docupilot/shared';
+import type { FolderAccess } from './access';
 import type * as schema from './db/schema';
 import type { StorageProvider } from './storage/types';
 
@@ -57,10 +58,13 @@ export interface AuthUser {
 export interface WorkspaceMember {
   workspaceId: string;
   role: Role;
+  /** Permissão exigida pela rota (usada na checagem de acesso por pasta). */
+  permission?: Permission;
 }
 
 export type AppVariables = {
   deps: AppDeps;
   user: AuthUser;
   member: WorkspaceMember;
+  folderAccess?: FolderAccess;
 };

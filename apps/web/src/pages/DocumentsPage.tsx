@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
+import { FolderAccessPanel } from '../components/FolderAccessPanel';
 import { Snippet } from '../components/Snippet';
 import { UploadForm } from '../components/UploadForm';
 import { Banner, Button, Card, Field } from '../components/ui';
@@ -14,7 +15,7 @@ import {
   useDocuments,
   useFolders,
   useHealth,
-  useMe,
+  useActiveWorkspace,
   useSearch,
 } from '../lib/queries';
 
@@ -25,17 +26,21 @@ function FolderRowItem({
   workspaceId,
   canEdit,
   canDelete,
+  canShare,
   onOpen,
 }: {
   folder: FolderRow;
   workspaceId: string;
   canEdit: boolean;
   canDelete: boolean;
+  /** Pode restringir a pasta e conceder acesso (empresa; owner/admin/manager). */
+  canShare: boolean;
   onOpen: () => void;
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [name, setName] = useState(folder.name);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,11 +92,27 @@ function FolderRowItem({
             className="min-h-11 text-left font-medium underline-offset-2 hover:underline"
           >
             📁 {folder.name}
+            {folder.restricted && (
+              <span className="ml-2 text-xs font-normal text-[var(--muted)]">
+                🔒 {t('folderAccess.badge')}
+                {folder.access === 'view' && ` · ${t('folderAccess.viewOnly')}`}
+              </span>
+            )}
           </button>
         )}
         {!editing && (
           <span className="flex gap-2">
-            {canEdit && (
+            {canShare && (
+              <button
+                type="button"
+                className="min-h-11 px-2 text-sm underline"
+                aria-expanded={sharing}
+                onClick={() => setSharing((v) => !v)}
+              >
+                {t('folderAccess.open')}
+              </button>
+            )}
+            {canEdit && folder.access !== 'view' && (
               <button
                 type="button"
                 className="min-h-11 px-2 text-sm underline"
@@ -115,6 +136,13 @@ function FolderRowItem({
           </span>
         )}
       </div>
+      {sharing && canShare && (
+        <FolderAccessPanel
+          workspaceId={workspaceId}
+          folderId={folder.id}
+          onChanged={() => undefined}
+        />
+      )}
       {error && (
         <Banner tone="error">{t(`errors.${error}`, { defaultValue: t('errors.INTERNAL') })}</Banner>
       )}
@@ -211,10 +239,9 @@ function SearchResults({ workspaceId, q }: { workspaceId: string; q: string }) {
 
 export function DocumentsPage() {
   const { t } = useTranslation();
-  const me = useMe();
   const health = useHealth();
   const [params, setParams] = useSearchParams();
-  const workspace = me.data?.workspaces[0];
+  const workspace = useActiveWorkspace();
   const folderId = params.get('folder');
   const q = params.get('q')?.trim() ?? '';
   const [draft, setDraft] = useState(q);
@@ -316,7 +343,8 @@ export function DocumentsPage() {
                   folder={f}
                   workspaceId={workspace.id}
                   canEdit={canEdit}
-                  canDelete={canDelete}
+                  canDelete={canDelete && f.access !== 'view'}
+                  canShare={canDelete && !workspace.isPersonal}
                   onOpen={() => open(f.id)}
                 />
               ))}

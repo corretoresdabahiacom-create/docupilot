@@ -11,7 +11,8 @@
     "profiles": "Perfis de dados",
     "create": "Criar documentos",
     "workflows": "Workflows",
-    "notifications": "Notificações"
+    "notifications": "Notificações",
+    "team": "Equipe"
   },
   "auth": {
     "email": "E-mail",
@@ -631,5 +632,97 @@
       "workflow_rejected": "Workflow rejeitado: {{name}}",
       "workflow_cancelled": "Workflow cancelado: {{name}}"
     }
+  },
+  "workspace": {
+    "label": "Workspace ativo",
+    "personal": "Pessoal"
+  },
+  "team": {
+    "title": "Equipe",
+    "personalNotice": "O workspace pessoal não tem equipe. Crie uma empresa abaixo ou troque de workspace no seletor do topo.",
+    "current": "Workspace “{{name}}” — seu papel: {{role}}.",
+    "members": "Membros",
+    "you": "você",
+    "role": "Papel",
+    "roles": {
+      "owner": "Proprietário",
+      "admin": "Administrador",
+      "manager": "Gerente",
+      "approver": "Aprovador",
+      "editor": "Editor",
+      "viewer": "Leitor"
+    },
+    "remove": "Remover",
+    "leave": "Sair do workspace",
+    "confirmRemove": "Remover {{name}} deste workspace?",
+    "confirmLeave": "Sair deste workspace? Você perde o acesso aos documentos dele.",
+    "usage": "Usado: {{used}} de {{quota}}",
+    "defaultQuota": "cota padrão",
+    "quotaMb": "Cota (MB)",
+    "resetQuota": "Usar a cota padrão",
+    "invites": "Convites por link",
+    "inviteHint": "Gere um link e envie você mesmo à pessoa (não enviamos e-mail). O link vale uma única vez e expira.",
+    "expiresHours": "Validade (horas)",
+    "createLink": "Gerar link",
+    "linkOnce": "Copie agora: por segurança, este link não será exibido de novo.",
+    "link": "Link do convite",
+    "copy": "Copiar link",
+    "copied": "Copiado",
+    "revoke": "Revogar",
+    "inviteStatus": {
+      "pending": "pendente",
+      "used": "usado",
+      "expired": "expirado"
+    },
+    "activity": "Histórico do workspace",
+    "activityHint": "Somente metadados das ações (quem, o quê, quando); nunca o conteúdo dos documentos.",
+    "activityEmpty": "Nada registrado ainda.",
+    "system": "Sistema",
+    "actions": {
+      "organization.created": "criou a empresa",
+      "workspace.created": "criou o workspace",
+      "invite.created": "gerou um convite",
+      "invite.accepted": "aceitou um convite",
+      "invite.revoked": "revogou um convite",
+      "member.updated": "alterou um membro",
+      "member.removed": "removeu um membro",
+      "member.left": "saiu do workspace",
+      "folder.created": "criou uma pasta",
+      "folder.updated": "alterou uma pasta",
+      "folder.restricted": "restringiu uma pasta",
+      "folder.unrestricted": "liberou uma pasta",
+      "folder.access_granted": "concedeu acesso a uma pasta",
+      "folder.access_revoked": "revogou acesso a uma pasta",
+      "document.updated": "alterou um documento",
+      "auth.register": "criou a conta"
+    },
+    "createCompany": "Criar empresa",
+    "createCompanyHint": "Cria uma empresa com um workspace compartilhado, no qual você é o proprietário.",
+    "companyName": "Nome da empresa",
+    "create": "Criar"
+  },
+  "invite": {
+    "title": "Convite",
+    "invalid": "Este convite não é válido: pode ter expirado, sido usado ou revogado.",
+    "home": "Ir para o início",
+    "summary": "Você foi convidado para o workspace “{{workspace}}” da empresa “{{org}}” com o papel de {{role}}.",
+    "expires": "Válido até {{date}}.",
+    "accept": "Aceitar convite",
+    "needLogin": "Entre ou crie uma conta para aceitar o convite."
+  },
+  "folderAccess": {
+    "open": "Acesso",
+    "restrict": "Restringir esta pasta",
+    "restrictedHint": "Só proprietário, administrador, gerente e os membros abaixo veem esta pasta e as subpastas.",
+    "openHint": "Todos os membros do workspace veem esta pasta.",
+    "noGrants": "Nenhum membro com acesso extra.",
+    "member": "Membro",
+    "level": "Nível",
+    "view": "Só leitura",
+    "edit": "Leitura e edição",
+    "grant": "Conceder",
+    "revoke": "Remover",
+    "badge": "restrita",
+    "viewOnly": "somente leitura"
   }
 }

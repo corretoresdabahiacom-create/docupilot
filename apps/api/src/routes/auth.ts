@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { loginSchema, registerSchema } from '@docupilot/shared';
@@ -34,16 +34,20 @@ function getDummyHash(iterations: number): Promise<string> {
 }
 
 async function listWorkspaces(db: Db, userId: string) {
-  return db
-    .select({
-      id: workspaces.id,
-      name: workspaces.name,
-      isPersonal: workspaces.isPersonal,
-      role: workspaceMembers.role,
-    })
-    .from(workspaceMembers)
-    .innerJoin(workspaces, eq(workspaces.id, workspaceMembers.workspaceId))
-    .where(eq(workspaceMembers.userId, userId));
+  return (
+    db
+      .select({
+        id: workspaces.id,
+        name: workspaces.name,
+        isPersonal: workspaces.isPersonal,
+        role: workspaceMembers.role,
+      })
+      .from(workspaceMembers)
+      .innerJoin(workspaces, eq(workspaces.id, workspaceMembers.workspaceId))
+      .where(eq(workspaceMembers.userId, userId))
+      // Pessoal primeiro e ordem estável: o front usa o primeiro como padrão.
+      .orderBy(desc(workspaces.isPersonal), asc(workspaces.name))
+  );
 }
 
 authRoutes.post('/register', async (c) => {

@@ -11,7 +11,10 @@ import { WorkflowsPage } from './pages/WorkflowsPage';
 import { DocumentPage } from './pages/DocumentPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 import { FillFormPage } from './pages/FillFormPage';
+import { InvitePage } from './pages/InvitePage';
 import { ProfilesPage } from './pages/ProfilesPage';
+import { TeamPage } from './pages/TeamPage';
+import { takePendingInvite } from './lib/team';
 
 export function App() {
   const me = useMe();
@@ -30,7 +33,26 @@ export function App() {
           path="/register"
           element={signedIn ? <Navigate to="/" replace /> : <AuthPage mode="register" />}
         />
-        <Route path="/" element={signedIn ? <DocumentsPage /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/"
+          element={
+            signedIn ? (
+              // Convite aberto antes do login: volta para ele logo após entrar.
+              (() => {
+                const pending = takePendingInvite();
+                return pending ? (
+                  <Navigate to={`/convite/${encodeURIComponent(pending)}`} replace />
+                ) : (
+                  <DocumentsPage />
+                );
+              })()
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route path="/convite/:token" element={<InvitePage signedIn={signedIn} />} />
+        <Route path="/team" element={signedIn ? <TeamPage /> : <Navigate to="/login" replace />} />
         <Route
           path="/documents/:documentId"
           element={signedIn ? <DocumentPage /> : <Navigate to="/login" replace />}

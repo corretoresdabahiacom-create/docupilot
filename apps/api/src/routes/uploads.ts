@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import {
   MAX_VERSIONS_PER_DOCUMENT,
@@ -18,8 +18,10 @@ import {
   documentVersions,
   folders,
   uploads,
+  workspaceMembers,
   workspaces,
 } from '../db/schema';
+import { assertFolderAccess, getFolderAccess } from '../access';
 import { AppError, notFound } from '../errors';
 import { auditEntry, clientIp, parseBody } from '../http';
 import { requireAuth } from '../middleware/auth';
@@ -44,12 +46,17 @@ async function assertQuota(
   db: Db,
   quotas: Quotas,
   workspaceId: string,
+  userId: string,
   size: number,
   newDocument = true,
 ): Promise<void> {
   const ws = (
     await db
-      .select({ used: workspaces.storageBytesUsed, docs: workspaces.documentCount })
+      .select({
+        used: workspaces.storageBytesUsed,
+        docs: workspaces.documentCount,
+        isPersonal: workspaces.isPersonal,
+      })
       .from(workspaces)
       .where(eq(workspaces.id, workspaceId))
       .limit(1)
@@ -65,6 +72,7 @@ async function assertQuota(
     ws.used + size > quotas.storageBytesPerWorkspace ||
     (newDocument && ws.docs + 1 > quotas.documentsPerWorkspace) ||
     Number(total ?? 0) + size > quotas.storageBytesGlobal;
+  if (!exceeded && !ws.isPersonal) await assertMemberQuota(db, quotas, workspaceId, userId, size);
   if (exceeded) {
     throw new AppError(
       size > quotas.maxFileBytes ? 'FILE_TOO_LARGE' : 'QUOTA_EXCEEDED',
@@ -74,15 +82,69 @@ async function assertQuota(
   }
 }
 
+/**
+ * Cota por membro (Fase 7), só em workspace de empresa: soma dos bytes das versões enviadas
+ * pelo membro neste workspace contra o limite dele (`workspace_members.quota_bytes` ou o padrão).
+ */
+async function assertMemberQuota(
+  db: Db,
+  quotas: Quotas,
+  workspaceId: string,
+  userId: string,
+  size: number,
+): Promise<void> {
+  const member = (
+    await db
+      .select({ quota: workspaceMembers.quotaBytes })
+      .from(workspaceMembers)
+      .where(
+        and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)),
+      )
+      .limit(1)
+  )[0];
+  const limit = member?.quota ?? quotas.storageBytesPerMember;
+  const used = Number(
+    (
+      await db
+        .select({ total: sql<number>`coalesce(sum(${documentVersions.sizeBytes}), 0)` })
+        .from(documentVersions)
+        .where(
+          and(
+            eq(documentVersions.workspaceId, workspaceId),
+            eq(documentVersions.createdBy, userId),
+          ),
+        )
+    )[0]?.total ?? 0,
+  );
+  if (used + size > limit) {
+    throw new AppError('QUOTA_EXCEEDED', 429, 'A cota de armazenamento do membro foi excedida.', {
+      scope: 'member',
+    });
+  }
+}
+
 /** Documento do workspace que já tem versão com este SHA-256 (duplicado exato). */
-async function findDuplicate(db: Db, workspaceId: string, sha256: string) {
+async function findDuplicate(
+  db: Db,
+  workspaceId: string,
+  sha256: string,
+  hiddenFolderIds: string[] = [],
+) {
   return (
     await db
       .select({ documentId: documentVersions.documentId, name: documents.name })
       .from(documentHashes)
       .innerJoin(documentVersions, eq(documentVersions.id, documentHashes.documentVersionId))
       .innerJoin(documents, eq(documents.id, documentVersions.documentId))
-      .where(and(eq(documentHashes.workspaceId, workspaceId), eq(documentHashes.sha256, sha256)))
+      .where(
+        and(
+          eq(documentHashes.workspaceId, workspaceId),
+          eq(documentHashes.sha256, sha256),
+          hiddenFolderIds.length > 0
+            ? or(isNull(documents.folderId), notInArray(documents.folderId, hiddenFolderIds))
+            : undefined,
+        ),
+      )
       .limit(1)
   )[0];
 }
@@ -107,7 +169,9 @@ uploadRoutes.post(
     const { db } = c.get('deps');
     const { workspaceId } = c.get('member');
     const input = await parseBody(c, uploadPrecheckSchema);
-    const duplicate = await findDuplicate(db, workspaceId, input.sha256);
+    if (input.folderId) await assertFolderAccess(c, input.folderId, 'edit');
+    const hidden = (await getFolderAccess(c)).hiddenIds;
+    const duplicate = await findDuplicate(db, workspaceId, input.sha256, hidden);
     const sameName = (
       await db
         .select({ documentId: documents.id, name: documents.name })
@@ -150,15 +214,22 @@ uploadRoutes.post('/:workspaceId/uploads', requireWorkspacePermission('edit'), a
         .limit(1)
     )[0];
     if (!doc) throw notFound();
+    await assertFolderAccess(c, doc.folderId, 'edit');
     if ((await versionStats(db, doc.id)).count >= MAX_VERSIONS_PER_DOCUMENT) {
       throw new AppError('QUOTA_EXCEEDED', 429, 'Limite de versões do documento atingido.');
     }
     folderId = doc.folderId;
   }
-  await assertQuota(db, quotas, workspaceId, input.size, !input.documentId);
+  if (!input.documentId && folderId) await assertFolderAccess(c, folderId, 'edit');
+  await assertQuota(db, quotas, workspaceId, user.id, input.size, !input.documentId);
 
   if (!input.allowDuplicate) {
-    const dup = await findDuplicate(db, workspaceId, input.sha256);
+    const dup = await findDuplicate(
+      db,
+      workspaceId,
+      input.sha256,
+      (await getFolderAccess(c)).hiddenIds,
+    );
     if (dup) {
       throw new AppError('DUPLICATE_FILE', 409, 'Já existe um arquivo idêntico neste workspace.', {
         documentId: dup.documentId,
@@ -295,7 +366,7 @@ uploadRoutes.post(
     if (!check.ok)
       return reject(check.code, check.code.toLowerCase(), FILE_ERROR_STATUS[check.code] ?? 422);
 
-    await assertQuota(db, quotas, workspaceId, head.size, !upload.documentId);
+    await assertQuota(db, quotas, workspaceId, user.id, head.size, !upload.documentId);
 
     if (upload.documentId) {
       const doc = (

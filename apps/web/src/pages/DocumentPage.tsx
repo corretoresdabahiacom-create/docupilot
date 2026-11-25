@@ -18,7 +18,7 @@ import {
   useDocument,
   useFolders,
   useHealth,
-  useMe,
+  useActiveWorkspace,
 } from '../lib/queries';
 import { runExtraction } from '../lib/upload';
 
@@ -217,9 +217,8 @@ export function DocumentPage() {
   const { documentId } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const me = useMe();
   const health = useHealth();
-  const workspace = me.data?.workspaces[0];
+  const workspace = useActiveWorkspace();
   const ws = workspace?.id;
   const detail = useDocument(ws, documentId);
   const folders = useFolders(ws);

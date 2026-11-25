@@ -27,7 +27,7 @@ export function requireWorkspacePermission(
     const role = rows[0]?.role;
     if (!role || !isRole(role)) throw notFound();
     if (!can(role, permission)) throw forbidden();
-    c.set('member', { workspaceId, role });
+    c.set('member', { workspaceId, role, permission });
     return next();
   };
 }

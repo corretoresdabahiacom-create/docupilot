@@ -68,3 +68,32 @@ describe('matriz de permissões', () => {
     }
   }
 });
+
+describe('regras de gestão de membros (Fase 7)', () => {
+  it('owner concede de admin para baixo; nunca owner', async () => {
+    const { canAssignRole } = await import('./roles');
+    expect(canAssignRole('owner', 'admin')).toBe(true);
+    expect(canAssignRole('owner', 'viewer')).toBe(true);
+    expect(canAssignRole('owner', 'owner')).toBe(false);
+  });
+  it('admin concede de manager para baixo; não concede admin', async () => {
+    const { canAssignRole } = await import('./roles');
+    expect(canAssignRole('admin', 'manager')).toBe(true);
+    expect(canAssignRole('admin', 'admin')).toBe(false);
+  });
+  it('papéis sem manage_members não concedem nada', async () => {
+    const { canAssignRole, canManageMember } = await import('./roles');
+    for (const r of ['manager', 'approver', 'editor', 'viewer'] as const) {
+      expect(canAssignRole(r, 'viewer')).toBe(false);
+      expect(canManageMember(r, 'viewer')).toBe(false);
+    }
+  });
+  it('admin não altera owner nem outro admin; owner altera admin', async () => {
+    const { canManageMember } = await import('./roles');
+    expect(canManageMember('admin', 'owner')).toBe(false);
+    expect(canManageMember('admin', 'admin')).toBe(false);
+    expect(canManageMember('admin', 'editor')).toBe(true);
+    expect(canManageMember('owner', 'admin')).toBe(true);
+    expect(canManageMember('owner', 'owner')).toBe(false);
+  });
+});

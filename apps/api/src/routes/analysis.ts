@@ -35,12 +35,13 @@ import {
   extractionSources,
   usageRecords,
 } from '../db/schema';
-import { AppError, notFound } from '../errors';
+import { getFolderAccess, loadAccessibleDocument } from '../access';
+import { AppError } from '../errors';
 import { auditEntry, parseBody } from '../http';
 import { requireAuth } from '../middleware/auth';
 import { requireWorkspacePermission } from '../middleware/workspace';
 import { loadQuotas } from '../quotas';
-import type { AppVariables, Db } from '../types';
+import type { AppVariables } from '../types';
 
 export const analysisRoutes = new Hono<{ Variables: AppVariables }>();
 analysisRoutes.use('*', requireAuth);
@@ -49,18 +50,6 @@ const monthPeriod = () => new Date().toISOString().slice(0, 7);
 /** Lotes de inserção (Postgres aceita até 65.535 parâmetros por instrução; mantemos folga). */
 const JSON_CHUNK = 200;
 const MAX_FINDINGS = 50;
-
-async function loadDocument(db: Db, workspaceId: string, documentId: string) {
-  const doc = (
-    await db
-      .select()
-      .from(documents)
-      .where(and(eq(documents.id, documentId), eq(documents.workspaceId, workspaceId)))
-      .limit(1)
-  )[0];
-  if (!doc) throw notFound();
-  return doc;
-}
 
 /** Trecho de ~60 caracteres para cada lado, com o valor marcado. Sempre gerado no servidor. */
 export function snippetAround(text: string, start: number, end: number): string {
@@ -94,7 +83,7 @@ analysisRoutes.post(
     const { workspaceId } = c.get('member');
     const user = c.get('user');
     const input = await parseBody(c, analysisSchema);
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     if (!doc.currentVersionId || doc.status !== 'extracted') {
       throw new AppError('CONFLICT', 409, 'O documento ainda não tem texto extraído.');
     }
@@ -423,7 +412,7 @@ analysisRoutes.get(
   async (c) => {
     const { db } = c.get('deps');
     const { workspaceId } = c.get('member');
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
 
     const tasks = await db
       .select()
@@ -496,6 +485,7 @@ analysisRoutes.get(
           .select({
             id: documents.id,
             name: documents.name,
+            folderId: documents.folderId,
             status: documents.status,
             sha256: documentHashes.sha256,
             simhash: documentHashes.simhash,
@@ -507,7 +497,10 @@ analysisRoutes.get(
           )
           .where(and(eq(documents.workspaceId, workspaceId), ne(documents.id, doc.id)));
         const mineComparable = canCompareSimilarity({ status: doc.status, simhash: mine.simhash });
+        const access = await getFolderAccess(c);
         for (const o of others) {
+          // Documentos em pastas restritas que o usuário não vê não entram na comparação.
+          if (access.level(o.folderId) === 'none') continue;
           if (isExactDuplicate(mine.sha256, o.sha256)) {
             exact.push({ documentId: o.id, name: o.name });
           } else if (

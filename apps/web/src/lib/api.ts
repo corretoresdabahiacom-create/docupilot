@@ -65,6 +65,9 @@ export interface FolderRow {
   parentId: string | null;
   name: string;
   depth: number;
+  restricted?: boolean;
+  /** Nível do usuário nesta pasta (pastas restritas): `view` só lê. */
+  access?: 'view' | 'edit';
 }
 export interface VersionRow {
   id: string;

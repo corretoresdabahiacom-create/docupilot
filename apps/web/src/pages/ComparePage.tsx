@@ -17,7 +17,7 @@ import { Banner, Button, Card } from '../components/ui';
 import { ApiError } from '../lib/api';
 import { downloadExport, loadAndCompare, NoTextError, type CompareSide } from '../lib/compare';
 import { formatDate } from '../lib/format';
-import { useAllDocuments, useDocument, useMe } from '../lib/queries';
+import { useAllDocuments, useDocument, useActiveWorkspace } from '../lib/queries';
 
 type Tab = 'text' | 'fields' | 'clauses';
 const TABS: Tab[] = ['text', 'fields', 'clauses'];
@@ -441,8 +441,7 @@ function Summary({ result }: { result: ComparisonResult }) {
 
 export function ComparePage() {
   const { t } = useTranslation();
-  const me = useMe();
-  const ws = me.data?.workspaces[0]?.id;
+  const ws = useActiveWorkspace()?.id;
   const [params, setParams] = useSearchParams();
   const left: CompareSide = {
     documentId: params.get('ld') ?? '',
@@ -526,7 +525,6 @@ export function ComparePage() {
     );
   };
 
-  if (me.isPending) return <p className="text-sm text-[var(--muted)]">{t('common.loading')}</p>;
   if (!ws) return <Banner tone="error">{t('errors.NOT_FOUND')}</Banner>;
 
   return (

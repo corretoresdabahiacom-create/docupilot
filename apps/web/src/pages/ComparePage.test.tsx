@@ -16,7 +16,7 @@ const detail = {
   ],
 };
 vi.mock('../lib/queries', () => ({
-  useMe: () => ({ isPending: false, data: { workspaces: [{ id: 'w1', role: 'owner' }] } }),
+  useActiveWorkspace: () => ({ id: 'w1', role: 'owner' }),
   useAllDocuments: () => ({
     data: { documents: [{ id: 'd1', name: 'Contrato.pdf' }] },
   }),

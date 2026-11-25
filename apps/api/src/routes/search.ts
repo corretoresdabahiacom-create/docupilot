@@ -9,6 +9,7 @@ import {
   toTsQuery,
 } from '@docupilot/shared';
 import { AppError } from '../errors';
+import { getFolderAccess } from '../access';
 import { requireAuth } from '../middleware/auth';
 import { requireWorkspacePermission } from '../middleware/workspace';
 import type { AppVariables, Db } from '../types';
@@ -32,6 +33,7 @@ interface Params {
   documentId?: string;
   limit: number;
   offset: number;
+  hiddenFolderIds?: string[];
 }
 
 type Row = {
@@ -44,8 +46,18 @@ type Row = {
   text?: string;
 };
 
-function folderClause(folderId?: string, documentId?: string) {
+function folderClause(p: Params) {
+  const { folderId, documentId, hiddenFolderIds = [] } = p;
   const parts = [];
+  // Pastas restritas às quais o usuário não tem acesso (Fase 7).
+  if (hiddenFolderIds.length > 0) {
+    parts.push(
+      sql`AND (d.folder_id IS NULL OR d.folder_id NOT IN (${sql.join(
+        hiddenFolderIds.map((id) => sql`${id}`),
+        sql`, `,
+      )}))`,
+    );
+  }
   if (folderId)
     parts.push(
       folderId === 'root' ? sql`AND d.folder_id IS NULL` : sql`AND d.folder_id = ${folderId}`,
@@ -73,7 +85,7 @@ export async function searchFts(db: Db, p: Params): Promise<SearchHit[]> {
     LEFT JOIN document_metadata dm ON dm.document_id = d.id
     WHERE p.workspace_id = ${p.workspaceId}
       AND p.text_search @@ to_tsquery('simple', f_unaccent(lower(${match})))
-      ${folderClause(p.folderId, p.documentId)}
+      ${folderClause(p)}
     ORDER BY ts_rank(p.text_search, to_tsquery('simple', f_unaccent(lower(${match})))) DESC,
              d.name, p.page_number
     LIMIT ${p.limit} OFFSET ${p.offset}`,
@@ -148,7 +160,7 @@ export async function searchLike(db: Db, p: Params): Promise<SearchHit[]> {
     JOIN documents d ON d.id = p.document_id AND d.current_version_id = p.version_id
     LEFT JOIN document_metadata dm ON dm.document_id = d.id
     WHERE p.workspace_id = ${p.workspaceId} AND ${sql.join(conds, sql` AND `)}
-      ${folderClause(p.folderId, p.documentId)}
+      ${folderClause(p)}
     ORDER BY d.name, p.page_number
     LIMIT ${p.limit} OFFSET ${p.offset}`,
   );
@@ -174,6 +186,7 @@ searchRoutes.get('/:workspaceId/search', requireWorkspacePermission('read'), asy
   const { db } = c.get('deps');
   const params = {
     workspaceId: c.get('member').workspaceId,
+    hiddenFolderIds: (await getFolderAccess(c)).hiddenIds,
     ...parsed.data,
     // Pede um a mais para saber se há próxima página.
     limit: parsed.data.limit + 1,

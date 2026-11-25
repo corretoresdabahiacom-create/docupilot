@@ -64,3 +64,14 @@
 - O teste de fumaça em Chromium agora tem 45 verificações.
 
 - **Migração para Supabase (D16)**: o projeto Supabase ainda **não existe** (será criado pelo usuário com outro e-mail) e as migrações `0000`/`0001` **nunca foram aplicadas** a um Postgres real do Supabase; só ao PGlite. Não há dados a migrar (o D1 nunca foi criado).
+
+## Fase 7 (empresas)
+
+- **Não validado no Supabase real**: a migração `0002` só rodou em PGlite; o projeto Supabase ainda não existe.
+- **Convites sem e-mail**: o link é entregue por quem convida (copiar e enviar). Não há reenvio nem convite por e-mail.
+- **Sem transferência de propriedade** nem exclusão de empresa/workspace; o proprietário não pode sair. Não há múltiplos proprietários.
+- **Papel na organização** (`organization_members`) não concede acesso a workspaces; serve só para criar novos workspaces. Remover alguém de um workspace não o remove da organização.
+- **Pastas restritas — o que NÃO foi coberto**: (1) a verificação de "anexo mencionado sem arquivo" na análise compara nomes de **todos** os documentos do workspace (só devolve sim/não, mas pode contar um anexo guardado em pasta oculta); (2) criar pasta com nome igual ao de uma pasta oculta irmã responde 409 e, assim, revela que o nome existe; (3) no fim do upload (`complete`) a pasta não é reverificada (foi checada ao iniciar); (4) documentos gerados (Fase 6) e workflows não pertencem a pastas, então não são restringidos; (5) uma execução de workflow já iniciada continua usando os documentos validados no início, mesmo que o acesso mude depois.
+- **Cotas não são atômicas**: limite de membros, de convites pendentes e cota por membro são conferidos antes de gravar; duas requisições simultâneas podem ultrapassar o limite por pouco.
+- **Cota por membro** conta bytes de versões enviadas; excluir o documento devolve o espaço, mas mudar de dono do documento não existe.
+- **Histórico**: só registra ações que já geravam auditoria; downloads e leituras não são registrados.

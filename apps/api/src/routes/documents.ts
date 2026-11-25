@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import {
   detectTextGarbage,
@@ -21,6 +21,7 @@ import {
   usageRecords,
   workspaces,
 } from '../db/schema';
+import { assertFolderAccess, getFolderAccess, loadAccessibleDocument } from '../access';
 import { AppError, notFound } from '../errors';
 import { auditEntry, parseBody } from '../http';
 import { requireAuth } from '../middleware/auth';
@@ -33,18 +34,6 @@ export const documentRoutes = new Hono<{ Variables: AppVariables }>();
 documentRoutes.use('*', requireAuth);
 
 const monthPeriod = () => new Date().toISOString().slice(0, 7);
-
-async function loadDocument(db: Db, workspaceId: string, documentId: string) {
-  const doc = (
-    await db
-      .select()
-      .from(documents)
-      .where(and(eq(documents.id, documentId), eq(documents.workspaceId, workspaceId)))
-      .limit(1)
-  )[0];
-  if (!doc) throw notFound();
-  return doc;
-}
 
 async function loadVersion(db: Db, workspaceId: string, documentId: string, versionId: string) {
   const v = (
@@ -87,11 +76,18 @@ documentRoutes.get('/:workspaceId/documents', requireWorkspacePermission('read')
   const { db } = c.get('deps');
   const { workspaceId } = c.get('member');
   const folder = c.req.query('folderId');
+  const access = await getFolderAccess(c);
+  if (folder && folder !== 'all' && folder !== 'root') await assertFolderAccess(c, folder, 'read');
+  const visible =
+    access.hiddenIds.length === 0
+      ? undefined
+      : or(isNull(documents.folderId), notInArray(documents.folderId, access.hiddenIds));
   const where =
     !folder || folder === 'all'
-      ? eq(documents.workspaceId, workspaceId)
+      ? and(eq(documents.workspaceId, workspaceId), visible)
       : and(
           eq(documents.workspaceId, workspaceId),
+          visible,
           folder === 'root' ? isNull(documents.folderId) : eq(documents.folderId, folder),
         );
   const rows = await db
@@ -118,8 +114,7 @@ documentRoutes.get(
   requireWorkspacePermission('read'),
   async (c) => {
     const { db } = c.get('deps');
-    const { workspaceId } = c.get('member');
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const versions = await db
       .select({
         id: documentVersions.id,
@@ -186,7 +181,7 @@ documentRoutes.patch(
     const { workspaceId } = c.get('member');
     const user = c.get('user');
     const input = await parseBody(c, documentPatchSchema);
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     if (input.folderId) {
       const f = await db
         .select({ id: folders.id })
@@ -195,6 +190,8 @@ documentRoutes.patch(
         .limit(1);
       if (f.length === 0) throw notFound();
     }
+    // Mover para uma pasta restrita exige poder editar nela (a origem já foi checada).
+    if (input.folderId) await assertFolderAccess(c, input.folderId, 'edit');
     const name = input.name ?? doc.name;
     const folderId = input.folderId === undefined ? doc.folderId : input.folderId;
     await runBatch(db, [
@@ -223,7 +220,7 @@ documentRoutes.delete(
     const { db, storage } = c.get('deps');
     const { workspaceId } = c.get('member');
     const user = c.get('user');
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const versions = await db
       .select({
         id: documentVersions.id,
@@ -295,7 +292,7 @@ documentRoutes.get(
         'Armazenamento de arquivos não configurado.',
       );
     }
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const versionId = c.req.query('versionId') ?? doc.currentVersionId;
     if (!versionId) throw notFound();
     const version = await loadVersion(db, workspaceId, doc.id, versionId);
@@ -316,7 +313,7 @@ documentRoutes.get(
   async (c) => {
     const { db } = c.get('deps');
     const { workspaceId } = c.get('member');
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const versionId = c.req.query('versionId') ?? doc.currentVersionId;
     if (!versionId) return c.json({ pages: [], hasMore: false });
     await loadVersion(db, workspaceId, doc.id, versionId);
@@ -345,7 +342,7 @@ documentRoutes.post(
     const { db } = c.get('deps');
     const { workspaceId } = c.get('member');
     const user = c.get('user');
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const version = await loadVersion(db, workspaceId, doc.id, c.req.param('versionId'));
     if (version.id === doc.currentVersionId) return c.json({ status: doc.status });
 
@@ -409,7 +406,7 @@ documentRoutes.delete(
     const { db, storage } = c.get('deps');
     const { workspaceId } = c.get('member');
     const user = c.get('user');
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const version = await loadVersion(db, workspaceId, doc.id, c.req.param('versionId'));
     if (version.id === doc.currentVersionId) {
       throw new AppError('CONFLICT', 409, 'A versão atual não pode ser excluída.');
@@ -455,7 +452,7 @@ documentRoutes.put(
     const { workspaceId } = c.get('member');
     const user = c.get('user');
     const input = await parseBody(c, pagesUploadSchema);
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const version = await loadVersion(db, workspaceId, doc.id, c.req.param('versionId'));
     if (version.id !== doc.currentVersionId) {
       throw new AppError('CONFLICT', 409, 'Só a versão atual recebe texto extraído.');
@@ -558,7 +555,7 @@ documentRoutes.post(
     const { workspaceId } = c.get('member');
     const user = c.get('user');
     const input = await parseBody(c, extractionCompleteSchema);
-    const doc = await loadDocument(db, workspaceId, c.req.param('documentId'));
+    const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
     const version = await loadVersion(db, workspaceId, doc.id, c.req.param('versionId'));
     if (version.id !== doc.currentVersionId) {
       throw new AppError('CONFLICT', 409, 'Só a versão atual pode ser finalizada.');

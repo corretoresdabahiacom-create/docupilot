@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CANDIDATE_RULES, MAX_CANDIDATES, MAX_FIELD_OCCURRENCES } from './extraction';
 import { ALLOWED_MIME_TYPES } from './files';
+import { ASSIGNABLE_ROLES } from './roles';
 import { MAX_CHARS_PER_PAGE, MAX_PAGES_PER_DOCUMENT, MAX_PAGES_PER_REQUEST } from './quotas';
 
 export const emailSchema = z.string().trim().toLowerCase().email().max(254);
@@ -166,3 +167,38 @@ export const uploadCompleteSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type UploadRequestInput = z.infer<typeof uploadRequestSchema>;
+
+// ---------- Fase 7: empresas, convites, pastas compartilhadas ----------
+export const organizationCreateSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  workspaceName: z.string().trim().min(1).max(100).optional(),
+});
+
+export const workspaceCreateSchema = z.object({ name: z.string().trim().min(1).max(100) });
+
+export const inviteCreateSchema = z.object({
+  role: z.enum(ASSIGNABLE_ROLES),
+  /** Validade do link, em horas (1 hora a 30 dias). Padrão: 72 h. */
+  expiresInHours: z.number().int().min(1).max(720).default(72),
+});
+
+export const inviteAcceptSchema = z.object({ token: z.string().min(20).max(200) });
+
+export const memberUpdateSchema = z
+  .object({
+    role: z.enum(ASSIGNABLE_ROLES).optional(),
+    /** Cota de armazenamento do membro em bytes; `null` volta ao padrão. */
+    quotaBytes: z
+      .number()
+      .int()
+      .min(0)
+      .max(1024 ** 4)
+      .nullable()
+      .optional(),
+  })
+  .refine((v) => v.role !== undefined || v.quotaBytes !== undefined, {
+    message: 'Informe papel ou cota.',
+  });
+
+export const folderRestrictSchema = z.object({ restricted: z.boolean() });
+export const folderGrantSchema = z.object({ access: z.enum(['view', 'edit']) });

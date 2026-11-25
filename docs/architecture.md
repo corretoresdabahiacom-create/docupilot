@@ -66,3 +66,13 @@ Navegador (React PWA)
 ## Monetização
 
 `feature_flags.monetization_enabled = false`; `/api/billing/*` responde 404; nenhum SDK de pagamento.
+
+## Empresas (Fase 7)
+
+```
+organization (company) ──► workspace ──► workspace_members (papel, cota por membro)
+                              ├─ organization_invites (token com hash, papel, expiração, uso único)
+                              └─ folders (restricted) ──► folder_members (view | edit)
+```
+
+A autorização é sempre `usuário → workspace → papel` (`requireWorkspacePermission`); a restrição por pasta é calculada por requisição em `apps/api/src/access.ts` e aplicada em todo ponto que carrega documento ou pasta. Detalhes e limites: `docs/decisions.md` (D17) e `docs/limitations.md`.

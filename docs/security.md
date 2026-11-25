@@ -41,3 +41,19 @@
 ## Supabase: exposição pública do schema
 
 O Supabase expõe o schema `public` por PostgREST (chaves `anon`/`authenticated`). A migração `0001` liga **RLS em todas as tabelas sem nenhuma policy** e revoga os privilégios de `anon`/`authenticated`: a API pública não lê nem escreve nada. O app acessa o banco só pelo Worker, com a connection string (segredo). Não verificado contra um projeto Supabase real (rodar o _Security Advisor_ do painel após aplicar as migrações).
+
+## Empresas e convites (Fase 7)
+
+| Tema              | Medida                                                                                                                                                |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Token de convite  | 256 bits aleatórios; só o SHA-256 fica no banco; exibido uma vez; uso único com consumo atômico; expira (1 h–30 dias); revogável                      |
+| Enumeração        | token inválido, usado, expirado ou revogado → mesma resposta 404                                                                                      |
+| Prévia pública    | só nome da empresa, do workspace, papel e validade                                                                                                    |
+| Escalada de papel | só se concede/altera papel abaixo do próprio; `owner` nunca é concedido; sem auto-alteração                                                           |
+| Isolamento        | toda rota de equipe passa por `requireWorkspacePermission` (não-membro = 404); convite e concessão de pasta só valem no workspace de origem (testado) |
+| Pastas restritas  | 404 para quem não tem acesso; `view` não altera dados; concessões apagadas ao sair/ser removido                                                       |
+| E-mail de membros | só aparece para owner/admin                                                                                                                           |
+| Histórico         | só metadados; nunca conteúdo de documento                                                                                                             |
+| Supabase          | `folder_members` com RLS ligado e sem policies (migração `0002`)                                                                                      |
+
+Pendências desta fase: ver `docs/limitations.md` (Fase 7); nada foi testado no Supabase nem no Worker reais.

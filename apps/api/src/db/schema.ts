@@ -161,6 +161,8 @@ export const workspaceMembers = pgTable(
     workspaceId: fk('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
     userId: fk('user_id').references(() => users.id, { onDelete: 'cascade' }),
     role: text('role').notNull(),
+    /** Cota de armazenamento deste membro (bytes). Nula = padrão `storageBytesPerMember`. */
+    quotaBytes: bigint('quota_bytes', { mode: 'number' }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -179,6 +181,8 @@ export const folders = pgTable(
     parentId: text('parent_id'),
     name: text('name').notNull(),
     depth: integer('depth').notNull().default(1),
+    /** Pasta restrita: só owner/admin/manager e membros com concessão em `folder_members` a veem. */
+    restricted: boolean('restricted').notNull().default(false),
     createdBy: fk('created_by').references(() => users.id),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -186,6 +190,23 @@ export const folders = pgTable(
   (t) => [
     index('folders_ws_parent_idx').on(t.workspaceId, t.parentId),
     check('folders_depth_ck', sql`${t.depth} BETWEEN 1 AND 5`),
+  ],
+);
+
+/** Concessão por membro em pasta restrita (vale para a subpasta inteira). */
+export const folderMembers = pgTable(
+  'folder_members',
+  {
+    folderId: fk('folder_id').references(() => folders.id, { onDelete: 'cascade' }),
+    userId: fk('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    access: text('access').notNull(),
+    grantedBy: fk('granted_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.folderId, t.userId] }),
+    index('folder_members_user_idx').on(t.userId),
+    check('folder_members_access_ck', sql`${t.access} IN ('view','edit')`),
   ],
 );
 

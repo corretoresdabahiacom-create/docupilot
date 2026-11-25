@@ -157,3 +157,14 @@ O PDF **não passa pelo servidor** no preenchimento: o navegador baixa a versão
 - **Conexão no Worker:** 1 cliente por request (`max:1`, `prepare:false`, `fetch_types:false`), encerrado com `ctx.waitUntil`; exige `nodejs_compat`.
 - **Não verificado:** postgres.js e CPU de 10 ms em Worker real; pooler do Supabase; migrações aplicadas no Supabase.
 - **Supera** a escolha do D1 das decisões anteriores.
+
+## D17 — Empresas, convites e pastas compartilhadas (Fase 7)
+
+- **Modelo**: `organizations` (kind `company`) → `workspaces` → `workspace_members`. A autorização é SEMPRE no workspace; o papel na organização só vale para criar novos workspaces (owner/admin). O workspace pessoal não aceita convites.
+- **Convites**: link com token de 256 bits (`randomToken(32)`), guardado como SHA-256; uso único, consumo atômico (`UPDATE … WHERE used_at IS NULL AND expires_at > now`, em transação junto da criação do vínculo); token inválido, usado, expirado ou revogado dão a **mesma** resposta 404. O papel `owner` não é convidável; só o owner convida `admin`.
+- **Hierarquia de gestão** (`canAssignRole`/`canManageMember` em `packages/shared`): só se concede ou altera papéis **abaixo** do próprio; o owner nunca é alterado; não se altera o próprio papel; o owner não sai do workspace (não há transferência de propriedade ainda).
+- **Pastas restritas**: `folders.restricted` + `folder_members(folder_id, user_id, access view|edit)`. Concessão herda para as subpastas; nível efetivo = mínimo entre as pastas restritas do caminho. owner/admin/manager sempre veem tudo. Pasta oculta responde **404** (não revela existência); concessão `view` em ação que altera dados responde 403. O papel do workspace segue valendo (a concessão não eleva).
+- **Aplicação da restrição** (pontos de entrada revisados): carga de documento (`loadAccessibleDocument`, usada por todas as rotas de documento e análise), listagem de pastas e de documentos, busca, upload (pasta alvo, nova versão, duplicado/pré-checagem), mover documento, criar/renomear/mover/excluir pasta, comparação de duplicados na análise e entradas de workflow.
+- **Cota por membro**: soma de `document_versions.size_bytes` por `created_by` no workspace contra `workspace_members.quota_bytes` (nulo = `storageBytesPerMember`, 256 MB). Só em workspace de empresa. Recusa com 429 `QUOTA_EXCEEDED` (`details.scope = member`).
+- **Histórico**: leitura de `audit_logs` por `workspace_id`, com paginação por cursor; exige `share` (owner/admin/manager).
+- **RLS**: a migração `0002` liga RLS em `folder_members` (a `0001` só cobriu as tabelas então existentes).

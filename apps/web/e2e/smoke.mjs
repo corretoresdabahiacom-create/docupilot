@@ -457,6 +457,57 @@ try {
     .waitFor();
   check('notificação dentro do app (sem push)', true);
 
+  // 9b. Fase 7: empresa, convite por link, aceite por outro usuário, pasta restrita
+  await page.goto(`${BASE}/team`);
+  await page.getByLabel('Nome da empresa').fill('Acme Teste');
+  await page.getByRole('button', { name: 'Criar', exact: true }).click();
+  await page.getByText(/Membros \(1\//).waitFor();
+  check('cria empresa e vira proprietário', true);
+
+  await page.getByLabel('Papel', { exact: true }).selectOption('editor');
+  await page.getByRole('button', { name: 'Gerar link' }).click();
+  const linkBox = page.getByLabel('Link do convite');
+  await linkBox.waitFor();
+  const inviteUrl = await linkBox.inputValue();
+  check('gera link de convite exibido uma vez', inviteUrl.includes('/convite/'));
+  await page.reload();
+  check(
+    'o link não reaparece depois de recarregar',
+    (await page.getByLabel('Link do convite').count()) === 0,
+  );
+
+  // pasta restrita antes do convidado entrar
+  await page.goto(BASE);
+  await page.getByLabel('Nova pasta').fill('Diretoria');
+  await page.getByRole('button', { name: 'Criar pasta' }).click();
+  const dirRow = page.locator('li', { hasText: 'Diretoria' }).first();
+  await dirRow.getByRole('button', { name: 'Acesso' }).click();
+  await page.getByLabel('Restringir esta pasta').click();
+  await page.getByText(/Só proprietário, administrador/).waitFor();
+  check('restringe a pasta', true);
+
+  const guestCtx = await browser.newContext({ locale: 'pt-BR', serviceWorkers: 'block' });
+  const guest = await guestCtx.newPage();
+  await guest.goto(inviteUrl);
+  await guest.getByText(/Acme Teste/).waitFor();
+  check('prévia do convite sem login', (await guest.getByText('Aceitar convite').count()) === 0);
+  await guest.getByRole('link', { name: 'Criar conta' }).click();
+  await guest.getByLabel('Nome').fill('Beto Convidado');
+  await guest.getByLabel('E-mail').fill(`beto${Date.now()}@example.com`);
+  await guest.getByLabel('Senha').fill('correct horse battery staple');
+  await guest.getByRole('button', { name: 'Criar conta' }).last().click();
+  await guest.getByRole('button', { name: 'Aceitar convite' }).click();
+  await guest.getByLabel('Workspace ativo').waitFor();
+  check('convidado cria conta, aceita o convite e vê o seletor de workspace', true);
+  await guest.getByLabel('Workspace ativo').selectOption({ label: 'Geral' });
+  await guest.getByRole('heading', { name: 'Enviar documento' }).waitFor();
+  const guestSeesFolder = await guest.getByRole('button', { name: /Diretoria/ }).count();
+  check('convidado NÃO vê a pasta restrita', guestSeesFolder === 0);
+  await guest.goto(inviteUrl);
+  await guest.getByText(/não é válido/).waitFor();
+  check('link usado não vale mais', true);
+  await guestCtx.close();
+
   // 10. layout de celular
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto(BASE);

@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { DocRoot, ExecutionStatus, StepLogEntry, WorkflowStep } from '@docupilot/shared';
 import { api } from './api';
-import { useMe } from './queries';
+import { useActiveWorkspace } from './queries';
 
 export interface GeneratedRow {
   id: string;
@@ -47,8 +47,7 @@ export interface NotificationRow {
 }
 
 export function useWorkspace() {
-  const me = useMe();
-  const ws = me.data?.workspaces[0];
+  const ws = useActiveWorkspace();
   return { id: ws?.id, role: ws?.role, personal: ws?.isPersonal ?? true };
 }
 

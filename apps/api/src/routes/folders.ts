@@ -6,6 +6,7 @@ import {
   MAX_FOLDER_DEPTH,
   MAX_FOLDERS_PER_WORKSPACE,
 } from '@docupilot/shared';
+import { assertFolderAccess, getFolderAccess } from '../access';
 import { runBatch } from '../db/batch';
 import { documents, folders } from '../db/schema';
 import { AppError, notFound } from '../errors';
@@ -17,7 +18,13 @@ import type { AppVariables, Db } from '../types';
 export const folderRoutes = new Hono<{ Variables: AppVariables }>();
 folderRoutes.use('*', requireAuth);
 
-type FolderRow = { id: string; parentId: string | null; name: string; depth: number };
+type FolderRow = {
+  id: string;
+  parentId: string | null;
+  name: string;
+  depth: number;
+  restricted: boolean;
+};
 
 async function listFolders(db: Db, workspaceId: string): Promise<FolderRow[]> {
   return db
@@ -26,6 +33,7 @@ async function listFolders(db: Db, workspaceId: string): Promise<FolderRow[]> {
       parentId: folders.parentId,
       name: folders.name,
       depth: folders.depth,
+      restricted: folders.restricted,
     })
     .from(folders)
     .where(eq(folders.workspaceId, workspaceId))
@@ -58,8 +66,14 @@ function subtree(all: FolderRow[], rootId: string): { ids: string[]; height: num
 }
 
 folderRoutes.get('/:workspaceId/folders', requireWorkspacePermission('read'), async (c) => {
+  const access = await getFolderAccess(c);
   const rows = await listFolders(c.get('deps').db, c.get('member').workspaceId);
-  return c.json({ folders: rows });
+  const hidden = new Set(access.hiddenIds);
+  return c.json({
+    folders: rows
+      .filter((f) => !hidden.has(f.id))
+      .map((f) => ({ ...f, access: access.level(f.id) })),
+  });
 });
 
 folderRoutes.post('/:workspaceId/folders', requireWorkspacePermission('edit'), async (c) => {
@@ -75,6 +89,7 @@ folderRoutes.post('/:workspaceId/folders', requireWorkspacePermission('edit'), a
   if (parentId) {
     const parent = all.find((f) => f.id === parentId);
     if (!parent) throw notFound();
+    await assertFolderAccess(c, parentId, 'edit');
     depth = parent.depth + 1;
   }
   if (depth > MAX_FOLDER_DEPTH) {
@@ -120,6 +135,7 @@ folderRoutes.patch(
     const all = await listFolders(db, workspaceId);
     const folder = all.find((f) => f.id === c.req.param('folderId'));
     if (!folder) throw notFound();
+    await assertFolderAccess(c, folder.id, 'edit');
 
     const newName = input.name ?? folder.name;
     const newParent = input.parentId === undefined ? folder.parentId : input.parentId;
@@ -129,6 +145,7 @@ folderRoutes.patch(
     if (newParent) {
       const parent = all.find((f) => f.id === newParent);
       if (!parent) throw notFound();
+      await assertFolderAccess(c, parent.id, 'edit');
       if (ids.includes(parent.id)) {
         throw new AppError(
           'VALIDATION_ERROR',
@@ -200,6 +217,7 @@ folderRoutes.delete(
         .limit(1)
     )[0];
     if (!folder) throw notFound();
+    await assertFolderAccess(c, folder.id, 'delete');
     const child = await db
       .select({ id: folders.id })
       .from(folders)

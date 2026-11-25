@@ -22,7 +22,7 @@ import { ApiError } from '../lib/api';
 import { fetchDocumentBlob } from '../lib/documents';
 import { filledFileName, loadProfile, loadReferenceSources, saveBlob } from '../lib/fill';
 import { fillPdf, readFormFields } from '../lib/form';
-import { useAllDocuments, useDocument, useMe, useProfiles } from '../lib/queries';
+import { useAllDocuments, useDocument, useActiveWorkspace, useProfiles } from '../lib/queries';
 
 const errorKey = (err: unknown) => (err instanceof ApiError ? err.code : 'INTERNAL');
 
@@ -191,8 +191,7 @@ function Row({ item, onChange }: { item: FillItem; onChange: (next: FillItem) =>
 export function FillFormPage() {
   const { t } = useTranslation();
   const { documentId } = useParams();
-  const me = useMe();
-  const ws = me.data?.workspaces[0]?.id;
+  const ws = useActiveWorkspace()?.id;
   const detail = useDocument(ws, documentId);
   const allDocs = useAllDocuments(ws);
   const profiles = useProfiles();
@@ -301,7 +300,7 @@ export function FillFormPage() {
       });
     });
 
-  if (me.isPending || detail.isPending) return <p>{t('common.loading')}</p>;
+  if (detail.isPending) return <p>{t('common.loading')}</p>;
   if (!doc) return <Banner tone="error">{t('errors.NOT_FOUND')}</Banner>;
 
   return (

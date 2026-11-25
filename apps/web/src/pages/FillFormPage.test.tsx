@@ -23,7 +23,7 @@ vi.mock('../lib/fill', async (orig) => ({
 
 let mime = 'application/pdf';
 vi.mock('../lib/queries', () => ({
-  useMe: () => ({ isPending: false, data: { workspaces: [{ id: 'w1', role: 'owner' }] } }),
+  useActiveWorkspace: () => ({ id: 'w1', role: 'owner' }),
   useDocument: () => ({
     isPending: false,
     data: {

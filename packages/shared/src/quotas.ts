@@ -9,6 +9,9 @@ export const DEFAULT_QUOTAS = {
   textCharsPerWorkspace: 5_000_000,
   exportsPerMonth: 100,
   membersPerWorkspace: 5,
+  /** Padrão por membro em workspace de empresa (o dono pode ajustar por membro). */
+  storageBytesPerMember: 256 * 1024 ** 2,
+  invitesPendingPerWorkspace: 20,
   d1WritesPerDayBudget: 80_000,
 } as const;
 
