@@ -22,6 +22,7 @@ import {
   workspaces,
 } from '../db/schema';
 import { assertFolderAccess, getFolderAccess, loadAccessibleDocument } from '../access';
+import { deleteDocumentCascade } from '../documentOps';
 import { AppError, notFound } from '../errors';
 import { auditEntry, parseBody } from '../http';
 import { requireAuth } from '../middleware/auth';
@@ -218,61 +219,11 @@ documentRoutes.delete(
   requireWorkspacePermission('delete'),
   async (c) => {
     const { db, storage } = c.get('deps');
-    const { workspaceId } = c.get('member');
-    const user = c.get('user');
     const doc = await loadAccessibleDocument(c, c.req.param('documentId'));
-    const versions = await db
-      .select({
-        id: documentVersions.id,
-        storageKey: documentVersions.storageKey,
-        sizeBytes: documentVersions.sizeBytes,
-      })
-      .from(documentVersions)
-      .where(eq(documentVersions.documentId, doc.id));
-    const bytes = versions.reduce((n, v) => n + v.sizeBytes, 0);
-
-    // Ordem importa: o texto é descontado e as páginas removidas antes do documento, para os
-    // a coluna gerada `text_search` acompanhar e o contador de texto do workspace ficar correto.
-    await runBatch(db, [
-      db
-        .update(workspaces)
-        .set({
-          storageBytesUsed: sql`greatest(0, ${workspaces.storageBytesUsed} - ${bytes})`,
-          documentCount: sql`greatest(0, ${workspaces.documentCount} - 1)`,
-          textCharsUsed: sql`greatest(0, ${workspaces.textCharsUsed} - coalesce((select sum(char_count) from document_pages where document_id = ${doc.id}), 0))`,
-        })
-        .where(eq(workspaces.id, workspaceId)),
-      db.delete(documentPages).where(eq(documentPages.documentId, doc.id)),
-      db.delete(documentHashes).where(
-        inArray(
-          documentHashes.documentVersionId,
-          versions.map((v) => v.id),
-        ),
-      ),
-      db.delete(documentMetadata).where(eq(documentMetadata.documentId, doc.id)),
-      db.delete(documentVersions).where(eq(documentVersions.documentId, doc.id)),
-      db.delete(documents).where(eq(documents.id, doc.id)),
-      auditEntry(db, {
-        userId: user.id,
-        workspaceId,
-        action: 'document.deleted',
-        targetType: 'document',
-        targetId: doc.id,
-        meta: { versions: versions.length, bytes },
-      }),
-    ]);
-
-    // Banco primeiro, objetos depois: uma falha aqui deixa objetos órfãos (custo), nunca
-    // documentos apontando para arquivos inexistentes.
-    let storageCleaned = true;
-    if (storage && versions.length > 0) {
-      try {
-        await storage.deleteMany(versions.map((v) => v.storageKey));
-      } catch {
-        storageCleaned = false;
-        console.error('storage cleanup failed');
-      }
-    }
+    const { storageCleaned } = await deleteDocumentCascade(db, storage, doc, {
+      userId: c.get('user').id,
+      action: 'document.deleted',
+    });
     return c.json({ ok: true, storageCleaned });
   },
 );

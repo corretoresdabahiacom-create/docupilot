@@ -605,15 +605,28 @@ export const notifications = pgTable(
   (t) => [index('notifications_user_idx').on(t.userId, t.readAt)],
 );
 
-export const reports = pgTable('reports', {
-  id: id(),
-  targetType: text('target_type').notNull(),
-  targetRef: text('target_ref').notNull(),
-  reason: text('reason').notNull(),
-  status: text('status').notNull().default('open'),
-  resolvedAt: bigint('resolved_at', { mode: 'number' }),
-  createdAt: createdAt(),
-});
+export const reports = pgTable(
+  'reports',
+  {
+    id: id(),
+    targetType: text('target_type').notNull(),
+    targetRef: text('target_ref').notNull(),
+    reason: text('reason').notNull(),
+    status: text('status').notNull().default('open'),
+    /** Quando o proprietário foi avisado e a partir de quando a remoção (sem urgência) é permitida. */
+    ownerNotifiedAt: bigint('owner_notified_at', { mode: 'number' }),
+    removalAfter: bigint('removal_after', { mode: 'number' }),
+    resolution: text('resolution'),
+    resolvedBy: text('resolved_by'),
+    resolvedAt: bigint('resolved_at', { mode: 'number' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('reports_status_idx').on(t.status, t.createdAt),
+    check('reports_status_ck', sql`${t.status} IN ('open','owner_notified','dismissed','removed')`),
+    check('reports_target_ck', sql`${t.targetType} IN ('document','shared_link','other')`),
+  ],
+);
 
 // ---------- uso, quotas e segurança ----------
 export const usageRecords = pgTable(

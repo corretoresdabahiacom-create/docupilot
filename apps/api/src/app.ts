@@ -14,6 +14,8 @@ import { notificationRoutes } from './routes/notifications';
 import { profileRoutes } from './routes/profiles';
 import { searchRoutes } from './routes/search';
 import { teamRoutes } from './routes/teams';
+import { adminRoutes } from './routes/admin';
+import { reportRoutes } from './routes/reports';
 import { uploadRoutes } from './routes/uploads';
 import type { AppDeps, AppVariables } from './types';
 
@@ -58,6 +60,8 @@ export function createApp(deps: AppDeps) {
   app.route('/workspaces', generatedRoutes);
   app.route('/workspaces', workflowRoutes);
   app.route('/', teamRoutes);
+  app.route('/admin', adminRoutes);
+  app.route('/reports', reportRoutes);
   app.route('/me/consents', consentRoutes);
   app.route('/me/profiles', profileRoutes);
   app.route('/me/notifications', notificationRoutes);

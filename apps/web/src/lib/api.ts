@@ -46,7 +46,7 @@ export interface WorkspaceSummary {
   role: string;
 }
 export interface Me {
-  user: { id: string; email: string; displayName: string };
+  user: { id: string; email: string; displayName: string; isPlatformAdmin?: boolean };
   workspaces: WorkspaceSummary[];
 }
 export type DocumentStatus = 'needs_text' | 'extracted' | 'needs_ocr' | 'extraction_failed';

@@ -172,7 +172,12 @@ authRoutes.post('/logout', requireAuth, async (c) => {
 authRoutes.get('/me', requireAuth, async (c) => {
   const user = c.get('user');
   return c.json({
-    user: { id: user.id, email: user.email, displayName: user.displayName },
+    user: {
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      isPlatformAdmin: user.isPlatformAdmin,
+    },
     workspaces: await listWorkspaces(c.get('deps').db, user.id),
   });
 });

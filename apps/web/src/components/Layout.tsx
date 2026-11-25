@@ -127,6 +127,11 @@ export function Layout({ children, signedIn }: { children: ReactNode; signedIn: 
               )}
             </Link>
           )}
+          {signedIn && me.data?.user.isPlatformAdmin && (
+            <Link to="/admin" className="inline-flex min-h-11 items-center px-2 text-sm underline">
+              {t('nav.admin')}
+            </Link>
+          )}
           {signedIn && (
             <Link
               to="/profiles"

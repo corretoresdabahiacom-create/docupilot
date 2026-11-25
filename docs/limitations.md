@@ -75,3 +75,12 @@
 - **Cotas não são atômicas**: limite de membros, de convites pendentes e cota por membro são conferidos antes de gravar; duas requisições simultâneas podem ultrapassar o limite por pouco.
 - **Cota por membro** conta bytes de versões enviadas; excluir o documento devolve o espaço, mas mudar de dono do documento não existe.
 - **Histórico**: só registra ações que já geravam auditoria; downloads e leituras não são registrados.
+
+## Fase 8 (administração e validação)
+
+- **Não validado em produção**: o `scheduled()` (retenção), o `postgres.js` no Worker e as migrações `0002`/`0003` nunca rodaram em Worker/Supabase reais; só em Node + PGlite. O limite de 500 MB do Supabase e os limites do plano gratuito da Cloudflare **não foram verificados**.
+- **Teste de carga é local**: `autocannon` contra Node + PGlite em memória (uma máquina, 10 conexões, 10 s): `/api/health` ≈ 1 900 req/s; listar documentos ≈ 290 req/s (p99 53 ms); busca ≈ 180 req/s (p99 84 ms). **Não representa** Workers + Supabase (latência de rede, pooler, CPU de 10 ms). Não há teste de carga de upload nem de extração.
+- **Lighthouse** (v11, Chromium local, mobile simulado, tela de login servida por Node, sem CDN/HTTP/2): desempenho 70, acessibilidade 100, boas práticas 96, SEO 92, PWA 100. LCP 5,1 s sob throttling "slow 4G" simulado; o resto do bundle ainda é grande (`pdf.worker` 1,2 MB e o editor, carregados só nas telas que usam). Nota de desempenho em produção (com CDN e compressão) **não medida**. Só a tela de login foi auditada, não as internas.
+- **Painel admin**: o primeiro admin é definido por SQL; não há reautenticação para ações sensíveis, nem 2FA, nem trilha de aprovação dupla. O consumo de Workers/R2/Supabase **não é medido** pelo app (confira nos painéis dos provedores). Links públicos de compartilhamento **não existem** (contadores zerados, sinalizado na tela).
+- **Denúncias**: só documento pode ser removido; o dono não consegue contestar pelo app (apenas recebe aviso); o aviso é só no app (sem e-mail). A limitação de 5/hora usa o hash do IP e atrás de NAT compartilhado pode bloquear denunciantes legítimos.
+- **Varredura de segurança automatizada** cobre rotas registradas no Hono; ela não substitui teste de intrusão, revisão de dependências nem verificação do WAF/Turnstile reais.

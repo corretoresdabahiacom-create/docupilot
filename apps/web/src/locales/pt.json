@@ -12,7 +12,8 @@
     "create": "Criar documentos",
     "workflows": "Workflows",
     "notifications": "Notificações",
-    "team": "Equipe"
+    "team": "Equipe",
+    "admin": "Administração"
   },
   "auth": {
     "email": "E-mail",
@@ -630,7 +631,9 @@
       "workflow_failed": "Workflow falhou: {{name}}",
       "workflow_timed_out": "Workflow com tempo esgotado: {{name}}",
       "workflow_rejected": "Workflow rejeitado: {{name}}",
-      "workflow_cancelled": "Workflow cancelado: {{name}}"
+      "workflow_cancelled": "Workflow cancelado: {{name}}",
+      "report_notice": "Denúncia sobre um documento seu: revise-o em até o prazo informado",
+      "report_removed": "Um documento seu foi removido após denúncia"
     }
   },
   "workspace": {
@@ -724,5 +727,72 @@
     "revoke": "Remover",
     "badge": "restrita",
     "viewOnly": "somente leitura"
+  },
+  "admin": {
+    "title": "Administração da plataforma",
+    "overview": "Visão geral",
+    "activeUsers": "Usuários ativos",
+    "suspendedUsers": "Usuários suspensos",
+    "organizations": "Empresas",
+    "workspaces": "Workspaces",
+    "documents": "Documentos",
+    "storageApp": "Armazenamento (registrado pelo app)",
+    "stuckJobs": "Jobs travados",
+    "failedExecutions": "Execuções com falha (7 dias)",
+    "openReports": "Denúncias em aberto",
+    "notMeasured": "O consumo de Workers (requisições/CPU) e do armazenamento de objetos não é medido pelo app: confira nos painéis da Cloudflare e do Supabase.",
+    "dbUnverified": "O limite nominal do banco é uma referência não verificada; confira o limite atual no painel do Supabase.",
+    "sharesNotImplemented": "Links públicos de compartilhamento ainda não existem nesta versão; os contadores são zero.",
+    "noContent": "Este painel mostra apenas metadados. Nomes e conteúdo de documentos nunca são exibidos aqui.",
+    "users": "Usuários",
+    "searchEmail": "Buscar por e-mail",
+    "platformAdmin": "administrador",
+    "status": {
+      "active": "ativo",
+      "suspended": "suspenso"
+    },
+    "suspend": "Suspender",
+    "reactivate": "Reativar",
+    "confirmSuspend": "Suspender {{email}}? As sessões dele serão encerradas.",
+    "reports": "Denúncias",
+    "reportsHelp": "Sem urgência: avise o dono, aguarde o prazo e só então remova. Remoção urgente exige motivo e fica auditada.",
+    "noReports": "Nenhuma denúncia.",
+    "reportStatus": {
+      "open": "Em aberto",
+      "owner_notified": "Dono avisado",
+      "dismissed": "Arquivada",
+      "removed": "Conteúdo removido"
+    },
+    "removalAfter": "remoção liberada após {{date}}",
+    "notifyOwner": "Avisar o dono (prazo de {{hours}} h)",
+    "dismiss": "Arquivar denúncia",
+    "urgent": "Remoção urgente (sem aviso prévio)",
+    "urgentReason": "Motivo da urgência (mín. 10 caracteres)",
+    "removeContent": "Remover conteúdo",
+    "confirmRemove": "Remover o documento denunciado? Esta ação não pode ser desfeita.",
+    "flags": "Recursos",
+    "flagsHelp": "Recursos sem implementação não podem ser ligados; só é possível desligar.",
+    "on": "ligado",
+    "off": "desligado",
+    "turnOff": "Desligar",
+    "quotas": "Cotas",
+    "default": "padrão",
+    "resetQuota": "Voltar ao padrão"
+  },
+  "report": {
+    "title": "Denunciar conteúdo",
+    "intro": "Use este formulário para avisar sobre conteúdo ilegal ou abusivo. Não é preciso ter conta.",
+    "type": "Tipo de conteúdo",
+    "types": {
+      "shared_link": "Link compartilhado",
+      "document": "Documento",
+      "other": "Outro"
+    },
+    "ref": "Identificação do conteúdo",
+    "refHint": "Cole o link, o código ou descreva onde está.",
+    "reason": "O que há de errado (mín. 10 caracteres)",
+    "submit": "Enviar denúncia",
+    "sent": "Recebemos sua denúncia. Ela será analisada; por segurança, não informamos se o conteúdo existe.",
+    "privacy": "Não envie o conteúdo do documento aqui. Registramos apenas o que você escrever e um identificador anônimo do seu acesso, para limitar abuso."
   }
 }

@@ -12,7 +12,8 @@
     "create": "Create documents",
     "workflows": "Workflows",
     "notifications": "Notifications",
-    "team": "Team"
+    "team": "Team",
+    "admin": "Administration"
   },
   "auth": {
     "email": "Email",
@@ -630,7 +631,9 @@
       "workflow_failed": "Workflow failed: {{name}}",
       "workflow_timed_out": "Workflow timed out: {{name}}",
       "workflow_rejected": "Workflow rejected: {{name}}",
-      "workflow_cancelled": "Workflow cancelled: {{name}}"
+      "workflow_cancelled": "Workflow cancelled: {{name}}",
+      "report_notice": "A report was filed about one of your documents: review it before the deadline",
+      "report_removed": "One of your documents was removed after a report"
     }
   },
   "workspace": {
@@ -724,5 +727,72 @@
     "revoke": "Remove",
     "badge": "restricted",
     "viewOnly": "view only"
+  },
+  "admin": {
+    "title": "Platform administration",
+    "overview": "Overview",
+    "activeUsers": "Active users",
+    "suspendedUsers": "Suspended users",
+    "organizations": "Companies",
+    "workspaces": "Workspaces",
+    "documents": "Documents",
+    "storageApp": "Storage (recorded by the app)",
+    "stuckJobs": "Stuck jobs",
+    "failedExecutions": "Failed executions (7 days)",
+    "openReports": "Open reports",
+    "notMeasured": "Workers usage (requests/CPU) and object storage are not measured by the app: check the Cloudflare and Supabase dashboards.",
+    "dbUnverified": "The database nominal limit is an unverified reference; check the current limit in the Supabase dashboard.",
+    "sharesNotImplemented": "Public sharing links do not exist in this version; counters are zero.",
+    "noContent": "This panel shows metadata only. Document names and content are never shown here.",
+    "users": "Users",
+    "searchEmail": "Search by e-mail",
+    "platformAdmin": "admin",
+    "status": {
+      "active": "active",
+      "suspended": "suspended"
+    },
+    "suspend": "Suspend",
+    "reactivate": "Reactivate",
+    "confirmSuspend": "Suspend {{email}}? Their sessions will be ended.",
+    "reports": "Reports",
+    "reportsHelp": "Non-urgent: notify the owner, wait for the deadline, then remove. Urgent removal requires a reason and is audited.",
+    "noReports": "No reports.",
+    "reportStatus": {
+      "open": "Open",
+      "owner_notified": "Owner notified",
+      "dismissed": "Dismissed",
+      "removed": "Content removed"
+    },
+    "removalAfter": "removal allowed after {{date}}",
+    "notifyOwner": "Notify owner ({{hours}} h deadline)",
+    "dismiss": "Dismiss report",
+    "urgent": "Urgent removal (no prior notice)",
+    "urgentReason": "Reason for urgency (min. 10 characters)",
+    "removeContent": "Remove content",
+    "confirmRemove": "Remove the reported document? This cannot be undone.",
+    "flags": "Features",
+    "flagsHelp": "Features without an implementation cannot be turned on; they can only be turned off.",
+    "on": "on",
+    "off": "off",
+    "turnOff": "Turn off",
+    "quotas": "Quotas",
+    "default": "default",
+    "resetQuota": "Reset to default"
+  },
+  "report": {
+    "title": "Report content",
+    "intro": "Use this form to report illegal or abusive content. No account needed.",
+    "type": "Content type",
+    "types": {
+      "shared_link": "Shared link",
+      "document": "Document",
+      "other": "Other"
+    },
+    "ref": "Content identifier",
+    "refHint": "Paste the link or code, or describe where it is.",
+    "reason": "What is wrong (min. 10 characters)",
+    "submit": "Send report",
+    "sent": "We received your report and it will be reviewed. For safety, we do not say whether the content exists.",
+    "privacy": "Do not paste document content here. We only record what you write and an anonymous identifier of your connection, to limit abuse."
   }
 }

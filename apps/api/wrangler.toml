@@ -1,14 +1,17 @@
 name = "docupilot-api"
 main = "src/worker.ts"
 compatibility_date = "2026-10-01"
+# postgres.js precisa de sockets TCP/Buffer do runtime Node (chave de nível raiz, antes das tabelas).
+compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ENVIRONMENT = "production"
 # Origens do front-end autorizadas a chamar a API, separadas por vírgula.
 ALLOWED_ORIGINS = ""
 
-# postgres.js precisa de sockets TCP/Buffer do runtime Node.
-compatibility_flags = ["nodejs_compat"]
+# Retenção diária (auditoria 180 d, sessões, links expirados, denúncias resolvidas). 04:00 UTC.
+[triggers]
+crons = ["0 4 * * *"]
 
 # Banco: Postgres no Supabase. NÃO há binding: a connection string do POOLER (porta 6543, modo
 # transaction) é um segredo e nunca vai ao repositório:

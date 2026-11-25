@@ -83,6 +83,14 @@ createServer(async (req, res) => {
       }
       return;
     }
+    // SÓ neste servidor de teste: promove um usuário a administrador (em produção isso é feito
+    // por SQL, não há rota para virar admin).
+    if (url.pathname === '/__e2e/promote') {
+      await client.query('update users set is_platform_admin = true where email = $1', [
+        url.searchParams.get('email'),
+      ]);
+      return void res.writeHead(204).end();
+    }
     if (url.pathname.startsWith('/api/')) {
       const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req);
       const headers = new Headers();

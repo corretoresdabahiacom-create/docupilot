@@ -57,3 +57,19 @@ O Supabase expõe o schema `public` por PostgREST (chaves `anon`/`authenticated`
 | Supabase          | `folder_members` com RLS ligado e sem policies (migração `0002`)                                                                                      |
 
 Pendências desta fase: ver `docs/limitations.md` (Fase 7); nada foi testado no Supabase nem no Worker reais.
+
+## Administração e validação (Fase 8)
+
+| Tema                | Medida                                                                                                                       |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Acesso ao painel    | `requireAdmin`: anônimo 401, não-admin 404; sem rota para virar admin (SQL)                                                  |
+| Dados no painel     | só metadados; nunca nome nem conteúdo de documento (testado: nenhum nome/texto vaza)                                         |
+| Ações do admin      | auditadas (`admin.*`); suspensão encerra sessões; não suspende a si nem outro admin                                          |
+| Remoção de conteúdo | aviso ao dono + prazo de 72 h; urgente exige motivo e é auditada                                                             |
+| Denúncia pública    | Turnstile (se configurado), 5/h por hash de IP, resposta idêntica exista ou não o alvo                                       |
+| Isolamento          | `security.test.ts` percorre todas as rotas: sem sessão 401; não-membro 404; leitor não altera; sem vazamento de erro interno |
+| CSRF / cookie       | escrita sem cabeçalho de requisição recusada; cookie HttpOnly + SameSite=Lax                                                 |
+| Upload malicioso    | tipo por assinatura (magic bytes), limites de tamanho/cota, texto sempre escapado (ver fases 1–2)                            |
+| Retenção            | auditoria 180 d; sessões, convites, contadores e denúncias resolvidas apagados por cron diário                               |
+
+Não verificado: cron e conexão no Worker/Supabase reais; Turnstile real; teste de intrusão externo.

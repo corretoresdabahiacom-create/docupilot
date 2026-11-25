@@ -202,3 +202,30 @@ export const memberUpdateSchema = z
 
 export const folderRestrictSchema = z.object({ restricted: z.boolean() });
 export const folderGrantSchema = z.object({ access: z.enum(['view', 'edit']) });
+
+// ---------- Fase 8: denúncias e administração ----------
+export const REPORT_GRACE_HOURS = 72;
+
+export const reportCreateSchema = z.object({
+  targetType: z.enum(['document', 'shared_link', 'other']),
+  /** Identificador do conteúdo denunciado (id do documento, token do link ou descrição). */
+  targetRef: z.string().trim().min(1).max(300),
+  reason: z.string().trim().min(10).max(2000),
+  turnstileToken: z.string().min(1).optional(),
+});
+
+export const reportRemoveSchema = z
+  .object({
+    urgent: z.boolean().default(false),
+    /** Obrigatória na remoção urgente (sem aviso prévio ao proprietário). */
+    urgentReason: z.string().trim().min(10).max(500).optional(),
+  })
+  .refine((v) => !v.urgent || Boolean(v.urgentReason), {
+    message: 'Informe o motivo da urgência.',
+  });
+
+export const adminUserStatusSchema = z.object({ status: z.enum(['active', 'suspended']) });
+export const adminFlagSchema = z.object({ enabled: z.boolean() });
+export const adminQuotaSchema = z.object({
+  value: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+});

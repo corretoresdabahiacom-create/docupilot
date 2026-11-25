@@ -156,13 +156,18 @@ try {
   // 6. abre o resultado: preview do PDF na página citada
   await page.getByRole('link', { name: 'contrato.pdf' }).first().click();
   await page.getByText('Página 2 de 2').waitFor({ timeout: 20000 });
-  const canvasOk = await page.evaluate(() => {
+  const hasInk = () => {
     const c = document.querySelector('canvas');
-    if (!c) return false;
+    if (!c || !c.width) return false;
     const data = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    for (let i = 0; i < data.length; i += 4) if (data[i] < 128) return true; // há pixels escuros (texto)
+    for (let i = 0; i < data.length; i += 4) if (data[i] < 128) return true; // pixels escuros (texto)
     return false;
-  });
+  };
+  // espera o PDF.js (carregado sob demanda) terminar de pintar o canvas
+  const canvasOk = await page
+    .waitForFunction(hasInk, undefined, { timeout: 20000 })
+    .then(() => true)
+    .catch(() => false);
   check('preview do PDF renderiza a página citada (canvas com conteúdo)', canvasOk);
   await page.screenshot({ path: join(OUT, '03-preview.png') });
   await page.getByRole('tab', { name: 'Texto extraído' }).click();
@@ -507,6 +512,57 @@ try {
   await guest.getByText(/não é válido/).waitFor();
   check('link usado não vale mais', true);
   await guestCtx.close();
+
+  // 9b. administração e denúncia pública
+  const adminCtx = await browser.newContext({ locale: 'pt-BR', serviceWorkers: 'block' });
+  const adminPage = await adminCtx.newPage();
+  const adminEmail = `adm${Date.now()}@example.com`;
+  await adminPage.goto(`${BASE}/register`);
+  await adminPage.getByLabel('Nome').fill('Admin Teste');
+  await adminPage.getByLabel('E-mail').fill(adminEmail);
+  await adminPage.getByLabel('Senha').fill('correct horse battery staple');
+  await adminPage.getByRole('button', { name: 'Criar conta' }).last().click();
+  await adminPage.getByRole('heading', { name: 'Enviar documento' }).waitFor();
+  check(
+    'usuário comum não vê o link de administração',
+    (await adminPage.getByRole('link', { name: 'Administração' }).count()) === 0,
+  );
+  await adminPage.goto(`${BASE}/admin`);
+  await adminPage.waitForURL(`${BASE}/`);
+  check('usuário comum é redirecionado ao tentar abrir /admin', true);
+  await adminCtx.request.get(`${BASE}/__e2e/promote?email=${encodeURIComponent(adminEmail)}`);
+  await adminPage.goto(BASE);
+  await adminPage.getByRole('link', { name: 'Administração' }).click();
+  await adminPage.getByRole('heading', { name: 'Administração da plataforma' }).waitFor();
+  check('admin vê o painel', true);
+  const notMeasured = adminPage.getByText('não é medido pelo app').first();
+  await notMeasured.waitFor();
+  check('painel avisa que consumo de Workers não é medido', await notMeasured.isVisible());
+  const pageText = await adminPage.locator('main, body').first().innerText();
+  check('painel não exibe nomes de arquivos enviados', !pageText.includes('.pdf'));
+  const pub = await adminCtx.newPage();
+  await pub.goto(`${BASE}/report`);
+  await pub.getByLabel('Identificação do conteúdo').fill('abc-inexistente');
+  await pub.getByLabel(/O que há de errado/).fill('Conteúdo de teste para validar o formulário.');
+  await pub.getByRole('button', { name: 'Enviar denúncia' }).click();
+  await pub.getByText('não informamos se o conteúdo existe').waitFor();
+  check('denúncia pública responde sem revelar se o conteúdo existe', true);
+  await adminPage.reload();
+  await adminPage.getByText('abc-inexistente').first().waitFor();
+  check('denúncia aparece na fila do admin', true);
+  await adminPage.setViewportSize({ width: 390, height: 800 });
+  for (const path of ['/admin', '/team', '/report', '/notifications']) {
+    await adminPage.goto(`${BASE}${path}`);
+    await adminPage.waitForLoadState('networkidle');
+    const wide = await adminPage.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    check(`sem rolagem horizontal no celular em ${path}`, !wide);
+  }
+  await adminPage.goto(`${BASE}/admin`);
+  await adminPage.waitForLoadState('networkidle');
+  await adminPage.screenshot({ path: join(OUT, '06-admin-mobile.png'), fullPage: true });
+  await adminCtx.close();
 
   // 10. layout de celular
   await page.setViewportSize({ width: 390, height: 800 });

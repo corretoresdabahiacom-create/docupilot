@@ -76,3 +76,7 @@ organization (company) ──► workspace ──► workspace_members (papel, c
 ```
 
 A autorização é sempre `usuário → workspace → papel` (`requireWorkspacePermission`); a restrição por pasta é calculada por requisição em `apps/api/src/access.ts` e aplicada em todo ponto que carrega documento ou pasta. Detalhes e limites: `docs/decisions.md` (D17) e `docs/limitations.md`.
+
+## Administração (Fase 8)
+
+`/api/admin/*` (atrás de `requireAdmin`) lê agregados e metadados; `/api/reports` é público e limitado. `runRetention` roda no `scheduled()` do Worker. Detalhes: `docs/decisions.md` (D18).

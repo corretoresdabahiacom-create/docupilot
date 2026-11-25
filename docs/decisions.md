@@ -158,6 +158,18 @@ O PDF **não passa pelo servidor** no preenchimento: o navegador baixa a versão
 - **Não verificado:** postgres.js e CPU de 10 ms em Worker real; pooler do Supabase; migrações aplicadas no Supabase.
 - **Supera** a escolha do D1 das decisões anteriores.
 
+## D18 — Administração da plataforma, denúncias e retenção (Fase 8)
+
+- **Admin** = `users.is_platform_admin`; não existe rota para obter o papel (é definido por SQL). Não-admin recebe **404** (não revela que o painel existe); anônimo, 401. Todas as rotas `/admin/*` passam por `requireAdmin`, e toda ação grava auditoria `admin.*`.
+- **Só metadados**: o painel lista documentos sem nome nem texto (id, tipo, status, tamanho, páginas). Decisão deliberada: o admin não precisa ler o conteúdo para operar a plataforma.
+- **Suspensão**: `resolveSession` recusa usuário não ativo, então a suspensão derruba as sessões na hora. Não se suspende a si mesmo nem outro admin.
+- **Flags**: só podem ser **desligadas**; ligar responde 409, porque monetização e IA externa não têm implementação (R4/R7/R8).
+- **Cotas**: sobrescrita em `system_settings` (`quota.<nome>`), lida por `loadQuotas` nos pontos que aplicam limite.
+- **Denúncias**: `POST /reports` é público, com Turnstile (quando há chave) e 5/hora por hash do IP; sempre 201, para não revelar se o alvo existe. Fluxo de remoção de documento: `notify-owner` (notificação no app ao owner/admins do workspace, prazo `REPORT_GRACE_HOURS` = 72 h) → `remove` só depois do prazo. **Urgente** dispensa o prazo mas exige `urgentReason` e grava `admin.report_removed_urgent`; o dono é avisado depois. Remover reaproveita `deleteDocumentCascade` (o mesmo código da exclusão normal). Só alvos `document` são removíveis; `shared_link` e `other` só podem ser arquivados.
+- **Retenção** (`runRetention`, cron `0 4 * * *` no Worker via `scheduled()`): auditoria > 180 d, sessões expiradas, links expirados há > 30 d, denúncias resolvidas > 180 d, convites usados/expirados > 30 d, contadores > 1 d.
+- **Consumo**: o painel mostra só o que o app mede (armazenamento registrado, tamanho do banco). Workers e armazenamento de objetos aparecem como **não medidos**, e o limite nominal do banco como **não verificado**.
+- **Carregamento por página** (`React.lazy`): a tela de login deixou de baixar PDF.js e editor (bundle inicial 1,76 MB → 310 KB).
+
 ## D17 — Empresas, convites e pastas compartilhadas (Fase 7)
 
 - **Modelo**: `organizations` (kind `company`) → `workspaces` → `workspace_members`. A autorização é SEMPRE no workspace; o papel na organização só vale para criar novos workspaces (owner/admin). O workspace pessoal não aceita convites.

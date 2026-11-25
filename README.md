@@ -2,7 +2,7 @@
 
 Plataforma multi-tenant para organizar, extrair, comparar, preencher e gerar documentos, com rastreabilidade de origem e revisão humana. **Sem IA generativa por padrão**: o que é extração determinística, heurística ou IA é sempre declarado.
 
-> Estado: **Fase 7 (empresas)** concluída, aguardando aprovação. As Fases 2 a 6 seguem com aprovação formal pendente. Siga as fases em ordem; cada uma termina com aprovação.
+> Estado: **Fase 8 (administração e validação)** concluída, aguardando aprovação. É a última fase do plano. As Fases 2 a 7 seguem com aprovação formal pendente. Siga as fases em ordem; cada uma termina com aprovação.
 
 ## Estrutura
 
@@ -35,6 +35,14 @@ Teste de fumaça no navegador (Chromium): compile o front, suba `apps/api/e2e/se
 ## Princípios
 
 Custo zero, sem cartão. Nada é apresentado como operacional se não estiver configurado. Nunca inventar dado extraído. Nenhum parecer jurídico, contábil, médico ou fiscal. Nenhum documento enviado a terceiros sem consentimento registrado.
+
+## Fase 8 (administração e validação)
+
+- **Painel `/admin`** (só administrador da plataforma): totais, usuários (suspender/reativar), fila de denúncias, recursos (só desligar) e cotas. **Mostra apenas metadados**: nomes e conteúdo de documentos nunca aparecem. Quem não é admin recebe 404 na API e é redirecionado na tela.
+- **Primeiro administrador**: não há rota para virar admin. Execute no banco: `UPDATE users SET is_platform_admin = true WHERE email = 'voce@exemplo.com';`.
+- **Denúncia pública** em `/report` (sem login, Turnstile quando configurado, 5 por hora por origem; a resposta nunca revela se o conteúdo existe). Remoção de documento: avisar o dono, esperar 72 h e só então remover; remoção urgente exige motivo e fica auditada.
+- **Retenção diária** (cron `0 4 * * *`): auditoria > 180 dias, sessões expiradas, convites usados/expirados > 30 dias, denúncias resolvidas > 180 dias, contadores de limite > 1 dia.
+- **Validação**: varredura automática de **todas** as rotas da API (`apps/api/src/security.test.ts`): sem sessão → 401; não-membro → 404 em toda rota de workspace; leitor nunca altera dados; sem vazamento de pilha/SQL; CSRF e cookie. Fumaça no navegador com 64 verificações (inclui `/admin`, `/report` e celular a 390 px).
 
 ## Fase 7 (empresas)
 
